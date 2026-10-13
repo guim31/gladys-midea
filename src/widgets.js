@@ -1,169 +1,277 @@
 // -----------------------------------------------------------------------------
-// Dashboard widgets (SDK v0.14+, Gladys 5.1+).
+// Dashboard widget (manifest `widgets`): `climate`, one air conditioner.
 //
-// A widget puts the integration's own data on the Gladys dashboard without a
-// dedicated core widget. The manifest `widgets` field declares its identity
-// (key, label, icon, optional per-instance `settings`); at runtime the
-// integration returns a DECLARATIVE content — `text`, `value`, `gauge`,
-// `status`, `chart`, `card-list`, `image`, `button` — that the core renders
-// with its own theme, dark mode and translations. No HTML, no CSS.
+// What it adds to the Gladys device box: the room and the setpoint side by
+// side, the mode, the fan, the filter and the error code of the unit at a
+// glance, and one-tap buttons: on/off, setpoint down/up, and a small form
+// (Gladys 5.2+, #3168) to change mode and fan speed together.
 //
-// Each entry of WIDGETS is keyed by the widget `key` and exposes:
-//   - get(gladys, { settings, language, units, config }): the content,
-//     registered by index.js with `gladys.onWidgetGet(key, ...)`;
-//   - action(gladys, { actionKey, params, settings, config }) (optional): a
-//     tapped `button` carrying an `action`, registered with
-//     `gladys.onWidgetAction`.
-//
-// Check your contents in the tests with `validateWidgetContent` (exported by
-// the SDK, see test/widgets.test.js), or run with DEBUG=gladys-integration-sdk
-// to have the SDK log every violation of the vocabulary and the budget.
+// Budget (8 components, 2 texts, 6 tiles, 1 status, 4 buttons): three live
+// tiles at most, one status list, four buttons. No button style marks
+// a state: `primary` is invisible in dark mode (#3153).
 // -----------------------------------------------------------------------------
 
+import { WIDGET_COLORS } from '@gladysassistant/integration-sdk';
 import {
-  createLogger,
-  DEVICE_FEATURE_CATEGORIES,
-  DEVICE_TRANSPORTS,
-  WIDGET_COLORS,
-} from '@gladysassistant/integration-sdk';
-import { identifyDevice } from './devices/index.js';
-import { weatherStation } from './devices/weatherStation.js';
-import { plug } from './devices/plug.js';
-import { light } from './devices/light.js';
+  FEATURE_KEYS,
+  NAMES,
+  clampSetpoint,
+  deviceIds,
+  fanName,
+  fanToGladys,
+  modeName,
+  modeToGladys,
+  supportedFanSpeeds,
+  supportedModes,
+} from './devices.js';
+import { WIDGET_KEY } from './hub.js';
 
-const logger = createLogger({ name: 'widgets' });
+export const ACTIONS = {
+  POWER: 'power',
+  DOWN: 'setpoint_down',
+  UP: 'setpoint_up',
+  SETTINGS: 'settings',
+};
 
-// Widget key, as declared in the manifest `widgets` field.
-export const DEMO_STATUS_WIDGET = 'demo_status';
-
-// Keys of the `button` actions the demo_status content declares.
-const DEMO_STATUS_ACTIONS = { IDENTIFY_LIGHT: 'identify_light' };
-
-// How the plug transport reads in the status list.
-const TRANSPORT_STATUS = {
-  [DEVICE_TRANSPORTS.LOCAL]: { value: { en: 'Local', fr: 'Locale' }, color: WIDGET_COLORS.SUCCESS },
-  [DEVICE_TRANSPORTS.CLOUD]: { value: { en: 'Cloud', fr: 'Cloud' }, color: WIDGET_COLORS.INFO },
-  [DEVICE_TRANSPORTS.UNREACHABLE]: {
-    value: { en: 'Unreachable', fr: 'Injoignable' },
-    color: WIDGET_COLORS.DANGER,
+export const TEXT = {
+  pick: {
+    en: 'Choose an air conditioner in the settings of this widget.',
+    fr: 'Choisissez un climatiseur dans les réglages de ce widget.',
+    de: 'Wähle in den Einstellungen dieses Widgets eine Klimaanlage aus.',
+    es: 'Elija un aire acondicionado en la configuración de este widget.',
+  },
+  unknown: {
+    en: 'This air conditioner is not known yet: run a search in the integration.',
+    fr: 'Ce climatiseur est inconnu : lancez une recherche dans l’intégration.',
+    de: 'Diese Klimaanlage ist noch unbekannt: Starte eine Suche in der Integration.',
+    es: 'Este aire acondicionado aún no es conocido: inicie una búsqueda en la integración.',
+  },
+  room: { en: 'Room', fr: 'Pièce', de: 'Raum', es: 'Estancia' },
+  setpoint: { en: 'Setpoint', fr: 'Consigne', de: 'Sollwert', es: 'Consigna' },
+  outdoor: { en: 'Outdoor', fr: 'Extérieur', de: 'Außen', es: 'Exterior' },
+  humidity: { en: 'Humidity', fr: 'Humidité', de: 'Feuchte', es: 'Humedad' },
+  fan: { en: 'Fan', fr: 'Ventilation', de: 'Lüfter', es: 'Ventilador' },
+  filter: { en: 'Filter', fr: 'Filtre', de: 'Filter', es: 'Filtro' },
+  filterOk: { en: 'Clean', fr: 'Propre', de: 'Sauber', es: 'Limpio' },
+  filterDirty: { en: 'To clean', fr: 'À nettoyer', de: 'Reinigen', es: 'Por limpiar' },
+  error: { en: 'Error code', fr: 'Code erreur', de: 'Fehlercode', es: 'Código de error' },
+  off: { en: 'Off', fr: 'Éteint', de: 'Aus', es: 'Apagado' },
+  turnOn: { en: 'Turn on', fr: 'Allumer', de: 'Einschalten', es: 'Encender' },
+  turnOff: { en: 'Turn off', fr: 'Éteindre', de: 'Ausschalten', es: 'Apagar' },
+  settings: {
+    en: 'Mode and fan',
+    fr: 'Mode et ventilation',
+    de: 'Modus und Lüfter',
+    es: 'Modo y ventilador',
+  },
+  unreachable: {
+    en: 'not answering',
+    fr: 'ne répond pas',
+    de: 'antwortet nicht',
+    es: 'no responde',
+  },
+  switchedOn: { en: 'Turned on', fr: 'Allumé', de: 'Eingeschaltet', es: 'Encendido' },
+  switchedOff: { en: 'Turned off', fr: 'Éteint', de: 'Ausgeschaltet', es: 'Apagado' },
+  setpointSet: { en: 'Setpoint: ', fr: 'Consigne : ', de: 'Sollwert: ', es: 'Consigna: ' },
+  applied: {
+    en: 'Settings applied',
+    fr: 'Réglages appliqués',
+    de: 'Einstellungen übernommen',
+    es: 'Ajustes aplicados',
   },
 };
 
-// A live tile references a feature by its external_id: read it from the
-// discovery payload itself, so the widget and the device never disagree.
-function featureExternalId(gladys, config, blueprint, category) {
-  const device = blueprint.buildDevice(gladys, config);
-  return device.features.find((feature) => feature.category === category).external_id;
+const t = (text, language) => text[language] ?? text.en;
+
+// A form field label must be a multi-language object (the core's rule).
+const everyLanguage = (render) =>
+  Object.fromEntries(Object.keys(NAMES).map((language) => [language, render(language)]));
+
+/** "24.5 °C" written the way the language writes decimals. */
+export function formatTemperature(value, language) {
+  const number = language === 'en' ? String(value) : String(value).replace('.', ',');
+  return `${number} °C`;
 }
 
-function plugConnectionStatus(gladys, config) {
-  const { transport, degraded } = plug.transport(gladys, config);
-  const { value, color } = TRANSPORT_STATUS[transport];
-  if (degraded) {
-    return {
-      value: { en: `${value.en} (degraded mode)`, fr: `${value.fr} (mode dégradé)` },
+function message(text, language) {
+  return {
+    ttl_seconds: 300,
+    components: [{ type: 'text', variant: 'body', text: t(text, language) }],
+  };
+}
+
+async function get(hub, { settings, language = 'en' }) {
+  const record = settings?.device ? hub.resolveDevice(settings.device) : null;
+  if (!record?.capsQueried) {
+    return message(settings?.device ? TEXT.unknown : TEXT.pick, language);
+  }
+  const lang = NAMES[language] ? language : 'en';
+  const { caps, state } = record;
+  const ids = deviceIds(hub.gladys, record.id);
+  const step = caps.halfDegrees ? 0.5 : 1;
+
+  const components = [];
+  const tile = (key, label, icon) => ({
+    type: 'value',
+    device_feature: ids.feature(key),
+    label: t(label, lang),
+    icon,
+  });
+  components.push(tile(FEATURE_KEYS.INDOOR_TEMPERATURE, TEXT.room, 'thermometer'));
+  components.push(tile(FEATURE_KEYS.TARGET_TEMPERATURE, TEXT.setpoint, 'target'));
+  // Three tiles at most: with the status and the four buttons, the 8 of the budget.
+  if (record.hasOutdoor) {
+    components.push(tile(FEATURE_KEYS.OUTDOOR_TEMPERATURE, TEXT.outdoor, 'cloud'));
+  } else if (caps.humidity) {
+    components.push(tile(FEATURE_KEYS.HUMIDITY, TEXT.humidity, 'droplet'));
+  }
+
+  const on = state?.power === true;
+  const items = [
+    {
+      label: NAMES[lang].mode,
+      icon: 'power',
+      value: state ? (on ? modeName(modeToGladys(state.mode), lang) : t(TEXT.off, lang)) : '-',
+      color: on ? WIDGET_COLORS.SUCCESS : WIDGET_COLORS.NEUTRAL,
+    },
+    {
+      label: t(TEXT.fan, lang),
+      icon: 'wind',
+      value: state ? fanName(fanToGladys(state.fanSpeed), lang) : '-',
+      color: WIDGET_COLORS.NEUTRAL,
+    },
+  ];
+  if (caps.filter || record.filterAlert === true) {
+    items.push({
+      label: t(TEXT.filter, lang),
+      icon: 'filter',
+      value: t(record.filterAlert ? TEXT.filterDirty : TEXT.filterOk, lang),
+      color: record.filterAlert ? WIDGET_COLORS.WARNING : WIDGET_COLORS.NEUTRAL,
+    });
+  }
+  if (record.reachable !== true) {
+    items.unshift({
+      label: 'Midea',
+      icon: 'wifi-off',
+      value: `${record.host} · ${t(TEXT.unreachable, lang)}`,
       color: WIDGET_COLORS.WARNING,
+    });
+  }
+  if (record.errorCode) {
+    items.push({
+      label: t(TEXT.error, lang),
+      icon: 'alert-triangle',
+      value: record.errorCode,
+      color: WIDGET_COLORS.DANGER,
+    });
+  }
+  components.push({ type: 'status', items });
+
+  const stepText = language === 'en' ? String(step) : String(step).replace('.', ',');
+  components.push(
+    {
+      type: 'button',
+      label: t(on ? TEXT.turnOff : TEXT.turnOn, lang),
+      icon: 'power',
+      style: 'secondary',
+      // The tap toggles the state the unit has then, not the one shown.
+      action: { key: ACTIONS.POWER },
+    },
+    {
+      type: 'button',
+      label: `−${stepText} °C`,
+      icon: 'minus',
+      style: 'secondary',
+      action: { key: ACTIONS.DOWN },
+    },
+    {
+      type: 'button',
+      label: `+${stepText} °C`,
+      icon: 'plus',
+      style: 'secondary',
+      action: { key: ACTIONS.UP },
+    },
+    {
+      type: 'button',
+      label: t(TEXT.settings, lang),
+      icon: 'sliders',
+      style: 'secondary',
+      action: {
+        key: ACTIONS.SETTINGS,
+        fields: [
+          {
+            key: 'mode',
+            type: 'select',
+            required: true,
+            label: everyLanguage((language) => NAMES[language].mode),
+            default: String(state ? (modeToGladys(state.mode) ?? 1) : 1),
+            options: supportedModes(caps).map((value) => ({
+              value: String(value),
+              label: everyLanguage((language) => modeName(value, language)),
+            })),
+          },
+          {
+            key: 'fan_speed',
+            type: 'select',
+            required: true,
+            label: everyLanguage((language) => NAMES[language]['fan-speed']),
+            default: String(state ? fanToGladys(state.fanSpeed) : 0),
+            options: supportedFanSpeeds(caps).map((value) => ({
+              value: String(value),
+              label: everyLanguage((language) => fanName(value, language)),
+            })),
+          },
+        ],
+      },
+    },
+  );
+  return { ttl_seconds: 60, components };
+}
+
+async function action(hub, { actionKey, values, settings }) {
+  const device = settings?.device;
+  if (!device) {
+    throw new Error(TEXT.pick.en);
+  }
+  const record = hub.require(device);
+  if (actionKey === ACTIONS.POWER) {
+    const state = await hub.currentState(record);
+    const on = state.power !== true;
+    await hub.applySettings(device, { power: on ? 1 : 0 });
+    return { message: on ? TEXT.switchedOn : TEXT.switchedOff };
+  }
+  if (actionKey === ACTIONS.DOWN || actionKey === ACTIONS.UP) {
+    const state = await hub.currentState(record);
+    const step = record.caps.halfDegrees ? 0.5 : 1;
+    const target = clampSetpoint(
+      record.caps,
+      state.targetTemperature + (actionKey === ACTIONS.UP ? step : -step),
+    );
+    await hub.applySettings(device, { targetTemperature: target });
+    return {
+      message: Object.fromEntries(
+        Object.entries(TEXT.setpointSet).map(([language, prefix]) => [
+          language,
+          `${prefix}${formatTemperature(target, language)}`,
+        ]),
+      ),
     };
   }
-  return { value, color };
+  if (actionKey === ACTIONS.SETTINGS) {
+    if (!values || values.mode === undefined) {
+      // A core older than 5.2 drops the form and relays the tap without values.
+      throw new Error('This action needs Gladys 5.2 or later');
+    }
+    await hub.applySettings(device, {
+      power: 1,
+      mode: Number(values.mode),
+      fanSpeed: Number(values.fan_speed),
+    });
+    return { message: TEXT.applied };
+  }
+  throw new Error(`Unknown action ${actionKey}`);
 }
 
 export const WIDGETS = {
-  [DEMO_STATUS_WIDGET]: {
-    // `settings` holds the per-instance values of the declared `settings`
-    // (none here); `language` and `units` are those of the user viewing the
-    // dashboard, for the values you format yourself. Multi-language objects
-    // (`{ en, fr }`) are picked by the core, like everywhere else.
-    async get(gladys, { config }) {
-      logger.debug(`onWidgetGet <- ${DEMO_STATUS_WIDGET}`);
-      return {
-        // Reload policy: the computed parts below only change with the
-        // config, and index.js nudges the widget on every (re)connection and
-        // config update (see refreshWidgets) — the TTL is just a safety net.
-        ttl_seconds: 300,
-        components: [
-          // Device-bound tiles: LIVE, they follow the published states over
-          // the core's real-time path. No TTL, no nudge involved.
-          {
-            type: 'value',
-            label: { en: 'Temperature', fr: 'Température' },
-            icon: 'thermometer',
-            device_feature: featureExternalId(
-              gladys,
-              config,
-              weatherStation,
-              DEVICE_FEATURE_CATEGORIES.TEMPERATURE_SENSOR,
-            ),
-          },
-          {
-            type: 'value',
-            label: { en: 'Office plug', fr: 'Prise du bureau' },
-            icon: 'zap',
-            device_feature: featureExternalId(
-              gladys,
-              config,
-              plug,
-              DEVICE_FEATURE_CATEGORIES.ENERGY_SENSOR,
-            ),
-          },
-          // Computed rows: what the integration knows that no device feature
-          // carries. Served from the core cache until the TTL or a nudge.
-          {
-            type: 'status',
-            items: [
-              {
-                label: { en: 'Plug connection', fr: 'Connexion de la prise' },
-                icon: 'wifi',
-                ...plugConnectionStatus(gladys, config),
-              },
-              {
-                label: { en: 'Observed location', fr: 'Position observée' },
-                icon: 'map-pin',
-                value: `${config.latitude.toFixed(2)}, ${config.longitude.toFixed(2)}`,
-                color: WIDGET_COLORS.NEUTRAL,
-              },
-            ],
-          },
-          // `params` are declared HERE and sent back as-is: the handler never
-          // receives user input (a dashboard can hang on a public wall).
-          {
-            type: 'button',
-            label: { en: 'Identify the light', fr: 'Identifier la lampe' },
-            icon: 'eye',
-            style: 'secondary',
-            action: {
-              key: DEMO_STATUS_ACTIONS.IDENTIFY_LIGHT,
-              params: { device: light.deviceExternalId(gladys) },
-            },
-          },
-        ],
-      };
-    },
-
-    // Resolve an optional toast (string or multi-language object, ≤ 200
-    // characters). After a successful action the core drops the cached
-    // content and every open dashboard refetches it: no nudge needed.
-    async action(gladys, { actionKey, params, config }) {
-      logger.info(`onWidgetAction <- ${DEMO_STATUS_WIDGET}.${actionKey}`);
-      if (actionKey === DEMO_STATUS_ACTIONS.IDENTIFY_LIGHT) {
-        return identifyDevice(gladys, params.device, config);
-      }
-      // Throwing acks the action as failed: the message reaches the user.
-      throw new Error(`Unknown widget action: ${actionKey}`);
-    },
-  },
+  [WIDGET_KEY]: { get, action },
 };
-
-/**
- * Freshness nudge: ask the core to re-pull every widget NOW instead of
- * waiting for the content TTL. Call it when you KNOW a computed content
- * changed (here: the config, which drives the plug transport and the observed
- * location) — and after every (re)connection, since the nudges are
- * fire-and-forget: rate-limited core-side to 1 per 10 s per widget, dropped
- * silently while disconnected.
- */
-export function refreshWidgets(gladys) {
-  for (const key of Object.keys(WIDGETS)) {
-    gladys.requestWidgetRefresh(key);
-  }
-}

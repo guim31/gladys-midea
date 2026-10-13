@@ -1,77 +1,121 @@
+// -----------------------------------------------------------------------------
+// The `climate` widget: content within the core's vocabulary and budget,
+// bound to features the device really has, and its four buttons.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { buildDiscoveredDevices } from '../src/devices/index.js';
-import { simulateLanSession } from '../src/devices/plug.js';
-import { DEMO_STATUS_WIDGET, WIDGETS, refreshWidgets } from '../src/widgets.js';
-import { normalizeConfig } from '../src/config.js';
+import { ACTIONS } from '../src/widgets.js';
+import { CAPS, FakeMidea, createAll, createWorld, deviceId } from './helpers/world.js';
 
-const gladys = createFakeGladys();
-const config = normalizeConfig();
-const demoStatus = WIDGETS[DEMO_STATUS_WIDGET];
+async function createdWorld(t, options) {
+  const world = await createWorld(options);
+  t.after(() => world.app.stop());
+  await createAll(world);
+  return world;
+}
 
-// What the SDK passes to onWidgetGet, plus the config index.js adds.
-const getContent = (cfg = config) =>
-  demoStatus.get(gladys, { settings: {}, language: 'en', units: 'metric', config: cfg });
+async function content(world, unit, language = 'en') {
+  const ack = await world.fake.widgetGet('climate', {
+    settings: { device: deviceId(world.gladys, unit) },
+    language,
+    units: 'metric',
+  });
+  assert.equal(ack.success, true, ack.error);
+  return ack.data.content;
+}
 
-test('the demo_status content is rendered exactly as sent', async () => {
-  // [] = nothing the core would drop, truncate or trim to the content budget.
-  assert.deepEqual(validateWidgetContent(await getContent()), []);
-});
+const buttons = (data) => data.components.filter((component) => component.type === 'button');
 
-test('the degraded plug connection content is valid too', async () => {
-  simulateLanSession(false);
-  try {
-    const content = await getContent();
-    assert.deepEqual(validateWidgetContent(content), []);
-    const status = content.components.find((component) => component.type === 'status');
-    assert.ok(
-      status.items.some((item) => item.color === 'warning'),
-      'degraded shows a warning',
-    );
-  } finally {
-    simulateLanSession(true);
-  }
-});
-
-test('the live tiles reference features the integration publishes', async () => {
-  const featureIds = new Set(
-    buildDiscoveredDevices(gladys, config).flatMap((device) =>
-      device.features.map((feature) => feature.external_id),
-    ),
-  );
-  const liveTiles = (await getContent()).components.filter((c) => c.device_feature);
-  assert.ok(liveTiles.length > 0, 'the template demonstrates a device-bound tile');
-  for (const tile of liveTiles) {
-    assert.ok(featureIds.has(tile.device_feature), `unknown feature ${tile.device_feature}`);
-  }
-});
-
-test('every button action of the content is handled and answers a short toast', async () => {
-  const buttons = (await getContent()).components.filter((c) => c.type === 'button' && c.action);
-  assert.ok(buttons.length > 0, 'the template demonstrates a widget action');
-  for (const { action } of buttons) {
-    const message = await demoStatus.action(gladys, {
-      actionKey: action.key,
-      params: action.params ?? {},
-      settings: {},
-      config,
+for (const caps of ['basic', 'metered', 'window']) {
+  for (const language of ['en', 'fr', 'de', 'es']) {
+    test(`widget content fits the vocabulary and the budget (${caps}, ${language})`, async (t) => {
+      const unit = new FakeMidea({
+        host: '192.0.2.10',
+        caps: CAPS[caps],
+        state: { power: true, filterAlert: true, errorCode: 3 },
+      });
+      const world = await createdWorld(t, { units: [unit] });
+      const data = await content(world, unit, language);
+      assert.deepEqual(validateWidgetContent(data), []);
+      // Every bound tile targets a feature the device has.
+      const features = new Set(
+        world.fake.discoveredDevices[0].features.map((feature) => feature.external_id),
+      );
+      for (const component of data.components) {
+        if (component.device_feature) {
+          assert.ok(features.has(component.device_feature), component.device_feature);
+        }
+      }
+      assert.equal(buttons(data).length, 4);
+      const keys = buttons(data).map((button) => button.action.key);
+      assert.equal(new Set(keys).size, keys.length, 'unique action keys');
     });
-    assert.ok(message.en, 'the toast carries at least the mandatory `en` text');
-    assert.ok(message.en.length <= 200, 'toasts are capped at 200 characters');
   }
+}
+
+test('widget: without a device, or an unknown one, a sentence says what to do', async (t) => {
+  const world = await createdWorld(t, { units: [] });
+  const none = await world.fake.widgetGet('climate', { settings: {}, language: 'fr' });
+  assert.match(none.data.content.components[0].text, /Choisissez un climatiseur/);
+  const unknown = await world.fake.widgetGet('climate', {
+    settings: { device: 'ext:test-integration:ac:1' },
+    language: 'de',
+  });
+  assert.match(unknown.data.content.components[0].text, /noch unbekannt/);
 });
 
-test('an unknown widget action fails, so the user sees the error', async () => {
-  await assert.rejects(
-    demoStatus.action(gladys, { actionKey: 'unknown', params: {}, settings: {}, config }),
-    /Unknown widget action/,
+test('widget: the status shows mode, fan, filter and error', async (t) => {
+  const unit = new FakeMidea({
+    host: '192.0.2.10',
+    caps: CAPS.window,
+    state: { power: true, mode: 2, fanSpeed: 60, filterAlert: true, errorCode: 3 },
+  });
+  const world = await createdWorld(t, { units: [unit] });
+  const data = await content(world, unit, 'fr');
+  const status = data.components.find((component) => component.type === 'status');
+  assert.deepEqual(
+    status.items.map((item) => [item.label, item.value]),
+    [
+      ['Mode', 'Froid'],
+      ['Ventilation', 'Moyenne'],
+      ['Filtre', 'À nettoyer'],
+      ['Code erreur', 3],
+    ],
   );
 });
 
-test('refreshWidgets nudges every widget', () => {
-  const fresh = createFakeGladys();
-  refreshWidgets(fresh);
-  assert.deepEqual(fresh.fake.widgetRefreshes, Object.keys(WIDGETS));
+test('widget buttons: power, setpoint down and up, mode form', async (t) => {
+  const unit = new FakeMidea({
+    host: '192.0.2.10',
+    state: { power: false, targetTemperature: 24 },
+  });
+  const world = await createdWorld(t, { units: [unit] });
+  const settings = { device: deviceId(world.gladys, unit) };
+  const act = (key, params = {}, values) =>
+    world.fake.widgetAction('climate', key, params, { settings, values });
+
+  assert.equal((await act(ACTIONS.POWER)).success, true);
+  assert.equal(unit.state.power, true);
+  await act(ACTIONS.UP);
+  assert.equal(unit.state.targetTemperature, 24.5);
+  const down = await act(ACTIONS.DOWN);
+  assert.equal(unit.state.targetTemperature, 24);
+  assert.equal(down.data.message.fr, 'Consigne : 24 °C');
+
+  const form = buttons(await content(world, unit)).find(
+    (button) => button.action.key === ACTIONS.SETTINGS,
+  );
+  assert.deepEqual(
+    form.action.fields.map((field) => field.key),
+    ['mode', 'fan_speed'],
+  );
+  await act(ACTIONS.SETTINGS, {}, { mode: '2', fan_speed: '5' });
+  assert.equal(unit.state.mode, 4);
+  assert.equal(unit.state.fanSpeed, 80);
+  assert.equal(unit.controls.length, 4, 'one frame per tap');
+
+  // A core older than 5.2 relays the tap without the form.
+  assert.equal((await act(ACTIONS.SETTINGS)).success, false);
 });

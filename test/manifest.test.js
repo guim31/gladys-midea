@@ -7,10 +7,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { DEVICE_BLUEPRINTS, SCENE_TRIGGER_KEYS } from '../src/devices/index.js';
+import { TRIGGERS } from '../src/hub.js';
+import { DISCOVERY_PORTS } from '../src/midea/discovery.js';
 import { SCENE_ACTIONS } from '../src/scenes.js';
 import { WIDGETS } from '../src/widgets.js';
 import { DEFAULT_CONFIG } from '../src/config.js';
+import { createWorld } from './helpers/world.js';
 
 const manifest = JSON.parse(
   await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
@@ -29,14 +31,15 @@ const allFields = [
   ...(manifest.widgets ?? []).flatMap((widget) => widget.settings ?? []),
 ];
 
-// Actions registered outside the blueprints (see index.js).
-const REGISTRY_LEVEL_ACTIONS = ['identify'];
+const SCENE_TRIGGER_KEYS = Object.values(TRIGGERS);
 
 // Manifest fields older Gladys releases reject as unknown, with the first
 // release accepting them. The store validator refuses a manifest whose
 // `gladys_version` minimum is lower: these tests catch it before a release.
 const CAPABILITY_FIELDS = ['scene_triggers', 'scene_actions', 'widgets'];
 const CAPABILITY_MIN_GLADYS_VERSION = [5, 1, 0];
+// Widget buttons opening a form (GladysAssistant/Gladys#3168) ship in 5.2.0.
+const WIDGET_FORM_MIN_GLADYS_VERSION = [5, 2, 0];
 const CATEGORIES_MIN_GLADYS_VERSION = [4, 86, 0];
 
 const keysOf = (list) => (list ?? []).map((entry) => entry.key);
@@ -57,14 +60,32 @@ function isAtLeast(version, required) {
   return true;
 }
 
-test('every manifest action has a registered handler', () => {
-  const handled = new Set([
-    ...DEVICE_BLUEPRINTS.flatMap((bp) => Object.keys(bp.actions ?? {})),
-    ...REGISTRY_LEVEL_ACTIONS,
-  ]);
-  for (const action of manifest.actions ?? []) {
-    assert.ok(handled.has(action.key), `manifest action "${action.key}" has no handler`);
+test('every manifest action has a registered handler', async () => {
+  const world = await createWorld({ units: [], scan: false });
+  try {
+    for (const action of manifest.actions ?? []) {
+      const ack = await world.fake.action(action.key, {});
+      assert.equal(ack.success, true, `manifest action "${action.key}": ${ack.error}`);
+    }
+  } finally {
+    await world.app.stop();
   }
+});
+
+test('the network discovery declares the ports the code scans', () => {
+  assert.deepEqual(manifest.network_discovery, [
+    { type: 'udp-active-broadcast', ports: DISCOVERY_PORTS },
+  ]);
+});
+
+test('the widget form buttons require Gladys >= 5.2.0', () => {
+  assert.ok(isAtLeast(minGladysVersion(), WIDGET_FORM_MIN_GLADYS_VERSION));
+});
+
+test('local only: the cloud is a one-time helper for the keys', () => {
+  assert.deepEqual(manifest.transports, ['local']);
+  assert.deepEqual(manifest.categories, ['climate']);
+  assert.equal(manifest.name, 'Midea');
 });
 
 test('declaring catalog categories requires Gladys >= 4.86.0', () => {

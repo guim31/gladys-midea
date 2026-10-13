@@ -12,44 +12,29 @@ the notes of the version's GitHub Release.
 
 ### Added
 
-- A working example of scene triggers, scene actions and dashboard widgets
-  (Gladys 5.1.0 or later).
-- `CHANGELOG.md`, rolled by the Release workflow.
-- A GitHub Release for every version, with its changelog section as notes: the
-  Gladys Supervision page links each version to the repository's releases.
-- CI runs the tests on Node 22 and 24, and builds the Docker image.
-- Dependabot keeps the npm dependencies and the GitHub Actions up to date.
-- `SECURITY.md` (how to report a vulnerability) and `CLAUDE.md` (project rules
-  for contributors and coding assistants).
-- Manifest tests: `version` matches `package.json`, `docker_image` is tagged
-  with it, descriptions hold 10 to 100 characters, placeholders are
-  multi-language objects.
-- The latitude and longitude fields show an example value as placeholder.
+- Local control of Midea air conditioners (appliance type `0xAC`) and of the
+  units of related brands set up in the SmartHome / MSmartHome, NetHome Plus,
+  Midea Air, Toshiba AC NA or Arctic King apps, over the Midea LAN protocol
+  (V2 and V3).
+- One Gladys device per unit: on/off, mode, setpoint (by half degrees), fan
+  speed, vertical and horizontal swing, indoor and outdoor temperature, indoor
+  humidity, eco, turbo and sleep modes, power draw and energy consumed — only
+  the features and the options the unit announces.
+- Automatic discovery through the Gladys core (mediated UDP broadcast on ports
+  6445 and 20086), typed IP addresses for the units it does not find, and a
+  "Search for air conditioners" action that lists every unit and its state.
+- The key of the V3 units is fetched once from the Midea cloud (public
+  NetHome Plus accounts by region, or your own account), kept in `/data`, and
+  fetched again when the unit is paired again; everything else is local.
+- The units are read by the integration itself every 30 seconds by default
+  (15 s to 5 min), only the changes are sent to Gladys, with a reminder every
+  6 hours.
+- Scene triggers "Filter needs cleaning" and "Unit error" (with the error
+  code), and a scene action "Run the air conditioner" that sets mode, setpoint
+  and fan in one command.
+- A dashboard widget "Air conditioner": room, setpoint and outdoor
+  temperature, mode, fan, filter and error code, with on/off, setpoint and
+  "Mode and fan" buttons.
+- Names, messages and documentation in English, French, German and Spanish.
 
-### Changed
-
-- Node.js 22 or later is required (Node 20 is end-of-life).
-- Integration SDK 0.15.0. The tests now run against the fake Gladys of the
-  SDK, which refuses the payloads Gladys refuses.
-- The refresh interval is one minute minimum, the fastest Gladys polls a
-  device. The plug's power is only sent when it changes, and every 30
-  minutes otherwise.
-
-### Fixed
-
-- Gladys refused the devices of the Discovery tab: the weather station and
-  the plug declared their poll frequency in seconds instead of one of the
-  values Gladys accepts, and were never polled. They now poll every minute,
-  and the readings follow the refresh interval of the configuration.
-
-- The release commit no longer fails `npm run format:check`: the Release
-  workflow updates the manifest `version` and `docker_image` in place instead
-  of re-printing the whole file with `jq`.
-- The integration can write to `/data`: the image creates the directory owned
-  by the `node` user, a new Docker volume was owned by root.
-- A sub-container running the integration's own image follows it to the new
-  tag at each release, as well as in the manifest of the build summary: it kept
-  the previous tag, which may not exist on the registry. Sub-containers on a
-  third-party image (a broker, a database...) keep theirs.
-
-[Unreleased]: https://github.com/GladysAssistant/integration-template-js/commits/main
+[Unreleased]: https://github.com/guim31/gladys-midea/commits/main

@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-midea",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "Gladys Assistant integration for Midea air conditioners (and their rebrands) on the local network.",
   "type": "module",
   "main": "index.js",
   "scripts": {

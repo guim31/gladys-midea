@@ -1,177 +1,532 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Midea",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Midea air conditioners and their rebrands on the local network: mode, setpoint, fan, energy.",
+    "fr": "Climatiseurs Midea et marques dérivées en réseau local : mode, consigne, ventilation, énergie.",
+    "de": "Midea-Klimaanlagen und baugleiche Marken im lokalen Netzwerk: Modus, Sollwert, Lüfter, Energie.",
+    "es": "Aires acondicionados Midea y marcas derivadas en la red local: modo, consigna, ventilador, energía."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "docker_image": "ghcr.io/guim31/gladys-midea:1.0.0",
+  "gladys_version": ">=5.2.0",
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-midea/main/cover.png",
+  "categories": ["climate"],
+  "transports": ["local"],
+  "network_discovery": [
+    {
+      "type": "udp-active-broadcast",
+      "ports": [6445, 20086]
+    }
+  ],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Finding your air conditioners",
+        "fr": "Trouver vos climatiseurs",
+        "de": "Deine Klimaanlagen finden",
+        "es": "Encontrar sus aires acondicionados"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Midea units, and those of related brands using the same apps (Comfee, Carrier, some Toshiba...), on the same network as Gladys are found automatically: open the Discovery tab. Keep them set up in their mobile app. If one is missing, enter its IP address below.",
+        "fr": "Les climatiseurs Midea, et ceux des marques liées aux mêmes applications (Comfee, Carrier, certains Toshiba...), du réseau de Gladys sont trouvés automatiquement : ouvrez l'onglet Découverte. Gardez-les configurés dans leur application. S'il en manque un, saisissez son adresse IP ci-dessous.",
+        "de": "Midea-Geräte und die verwandter Marken mit denselben Apps (Comfee, Carrier, manche Toshiba...) im selben Netzwerk wie Gladys werden automatisch gefunden: Öffne den Tab „Entdecken“. Lass sie in ihrer App eingerichtet. Fehlt eines, gib unten seine IP-Adresse ein.",
+        "es": "Los equipos Midea, y los de marcas afines con las mismas aplicaciones (Comfee, Carrier, algunos Toshiba...), de la misma red que Gladys se encuentran automáticamente: abra la pestaña Descubrir. Manténgalos configurados en su aplicación. Si falta alguno, introduzca su dirección IP a continuación."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-midea/blob/main/docs/en.md",
+          "label": {
+            "en": "Setup guide",
+            "fr": "Guide d'installation",
+            "de": "Installationsanleitung",
+            "es": "Guía de instalación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "hosts",
+      "type": "string",
+      "label": {
+        "en": "IP addresses of the air conditioners",
+        "fr": "Adresses IP des climatiseurs",
+        "de": "IP-Adressen der Klimaanlagen",
+        "es": "Direcciones IP de los aires acondicionados"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
       "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+        "en": "Optional, separated by commas. Only needed for the units automatic discovery does not find.",
+        "fr": "Facultatif, séparées par des virgules. Seulement pour les climatiseurs que la découverte automatique ne trouve pas.",
+        "de": "Optional, durch Kommas getrennt. Nur für Geräte nötig, die die automatische Erkennung nicht findet.",
+        "es": "Opcional, separadas por comas. Solo para los equipos que el descubrimiento automático no encuentra."
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "placeholder": {
+        "en": "e.g. 192.168.1.60, 192.168.1.61",
+        "fr": "ex. 192.168.1.60, 192.168.1.61",
+        "de": "z. B. 192.168.1.60, 192.168.1.61",
+        "es": "p. ej. 192.168.1.60, 192.168.1.61"
+      },
       "required": false,
-      "default": "celsius",
+      "default": ""
+    },
+    {
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Refresh interval",
+        "fr": "Intervalle d'actualisation",
+        "de": "Aktualisierungsintervall",
+        "es": "Intervalo de actualización"
+      },
+      "description": {
+        "en": "How often each unit is read, to follow the changes made with its remote or its app.",
+        "fr": "Fréquence de lecture de chaque climatiseur, pour suivre les changements faits avec sa télécommande ou son application.",
+        "de": "Wie oft jedes Gerät gelesen wird, um Änderungen per Fernbedienung oder App zu verfolgen.",
+        "es": "Frecuencia de lectura de cada equipo, para seguir los cambios hechos con su mando o su aplicación."
+      },
+      "required": false,
+      "default": "30",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "15",
+          "label": {
+            "en": "15 seconds",
+            "fr": "15 secondes",
+            "de": "15 Sekunden",
+            "es": "15 segundos"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "30 seconds",
+            "fr": "30 secondes",
+            "de": "30 Sekunden",
+            "es": "30 segundos"
+          }
+        },
+        {
+          "value": "60",
+          "label": { "en": "1 minute", "fr": "1 minute", "de": "1 Minute", "es": "1 minuto" }
+        },
+        {
+          "value": "120",
+          "label": { "en": "2 minutes", "fr": "2 minutes", "de": "2 Minuten", "es": "2 minutos" }
+        },
+        {
+          "value": "300",
+          "label": { "en": "5 minutes", "fr": "5 minutes", "de": "5 Minuten", "es": "5 minutos" }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the device names",
+        "fr": "Langue des noms des appareils",
+        "de": "Sprache der Gerätenamen",
+        "es": "Idioma de los nombres de los dispositivos"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Names given to new devices and their features (Mode, Fan speed...).",
+        "fr": "Noms donnés aux nouveaux appareils et à leurs fonctionnalités (Mode, Vitesse de ventilation...).",
+        "de": "Namen für neue Geräte und ihre Funktionen (Modus, Lüfterstufe...).",
+        "es": "Nombres de los nuevos dispositivos y de sus funciones (Modo, Velocidad del ventilador...)."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": { "en": "English", "fr": "Anglais", "de": "Englisch", "es": "Inglés" }
+        },
+        {
+          "value": "fr",
+          "label": { "en": "French", "fr": "Français", "de": "Französisch", "es": "Francés" }
+        },
+        {
+          "value": "de",
+          "label": { "en": "German", "fr": "Allemand", "de": "Deutsch", "es": "Alemán" }
+        },
+        {
+          "value": "es",
+          "label": { "en": "Spanish", "fr": "Espagnol", "de": "Spanisch", "es": "Español" }
+        }
+      ]
+    },
+    {
+      "key": "beep",
+      "type": "boolean",
+      "label": {
+        "en": "Beep on each command",
+        "fr": "Bip à chaque commande",
+        "de": "Piepton bei jedem Befehl",
+        "es": "Pitido en cada orden"
+      },
+      "description": {
+        "en": "The unit beeps when Gladys changes a setting, as with its remote.",
+        "fr": "Le climatiseur bipe quand Gladys change un réglage, comme avec sa télécommande.",
+        "de": "Das Gerät piept, wenn Gladys eine Einstellung ändert, wie bei der Fernbedienung.",
+        "es": "El equipo pita cuando Gladys cambia un ajuste, como con su mando."
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "energy_format",
+      "type": "select",
+      "label": {
+        "en": "Energy data format",
+        "fr": "Format des données d'énergie",
+        "de": "Format der Energiedaten",
+        "es": "Formato de los datos de energía"
+      },
+      "description": {
+        "en": "Units with an energy meter encode it in one of two ways. Change it only if the power or energy shown is absurd.",
+        "fr": "Les climatiseurs avec compteur d'énergie l'encodent de deux façons. À changer seulement si la puissance ou l'énergie affichée est absurde.",
+        "de": "Geräte mit Energiezähler codieren ihn auf eine von zwei Arten. Nur ändern, wenn die angezeigte Leistung oder Energie unsinnig ist.",
+        "es": "Los equipos con contador de energía lo codifican de dos maneras. Cámbielo solo si la potencia o la energía mostrada es absurda."
+      },
+      "required": false,
+      "default": "bcd",
+      "options": [
+        {
+          "value": "bcd",
+          "label": {
+            "en": "Standard (BCD)",
+            "fr": "Standard (BCD)",
+            "de": "Standard (BCD)",
+            "es": "Estándar (BCD)"
+          }
+        },
+        {
+          "value": "binary",
+          "label": { "en": "Binary", "fr": "Binaire", "de": "Binär", "es": "Binario" }
+        }
+      ]
+    },
+    {
+      "key": "cloud",
+      "type": "section",
+      "label": {
+        "en": "Keys of recent units (V3)",
+        "fr": "Clés des climatiseurs récents (V3)",
+        "de": "Schlüssel neuerer Geräte (V3)",
+        "es": "Claves de los equipos recientes (V3)"
+      },
+      "description": {
+        "en": "Units sold since about 2020 need a key, fetched once from the Midea cloud, then kept in Gladys: everything else stays local. Public accounts are used by default; you may enter your own NetHome Plus account instead.",
+        "fr": "Les climatiseurs vendus depuis 2020 environ demandent une clé, obtenue une fois auprès du cloud Midea puis gardée dans Gladys : tout le reste est local. Des comptes publics servent par défaut ; vous pouvez saisir votre propre compte NetHome Plus.",
+        "de": "Seit etwa 2020 verkaufte Geräte brauchen einen Schlüssel, der einmal aus der Midea-Cloud geholt und dann in Gladys gespeichert wird: Alles andere bleibt lokal. Standardmäßig werden öffentliche Konten genutzt; du kannst stattdessen dein eigenes NetHome-Plus-Konto eingeben.",
+        "es": "Los equipos vendidos desde 2020 aproximadamente necesitan una clave, obtenida una vez de la nube de Midea y guardada en Gladys: todo lo demás es local. Por defecto se usan cuentas públicas; puede introducir su propia cuenta NetHome Plus."
+      }
+    },
+    {
+      "key": "cloud_region",
+      "type": "select",
+      "label": {
+        "en": "Cloud region",
+        "fr": "Région du cloud",
+        "de": "Cloud-Region",
+        "es": "Región de la nube"
+      },
+      "description": {
+        "en": "Region of the public account. Try another one if the key cannot be fetched.",
+        "fr": "Région du compte public. Essayez-en une autre si la clé ne peut pas être obtenue.",
+        "de": "Region des öffentlichen Kontos. Probiere eine andere, wenn der Schlüssel nicht geholt werden kann.",
+        "es": "Región de la cuenta pública. Pruebe otra si no se puede obtener la clave."
+      },
+      "required": false,
+      "default": "DE",
+      "options": [
+        {
+          "value": "DE",
+          "label": { "en": "Europe", "fr": "Europe", "de": "Europa", "es": "Europa" }
+        },
+        {
+          "value": "US",
+          "label": { "en": "Americas", "fr": "Amériques", "de": "Amerika", "es": "América" }
+        },
+        { "value": "KR", "label": { "en": "Asia", "fr": "Asie", "de": "Asien", "es": "Asia" } }
+      ]
+    },
+    {
+      "key": "cloud_account",
+      "type": "string",
+      "label": {
+        "en": "NetHome Plus account (optional)",
+        "fr": "Compte NetHome Plus (facultatif)",
+        "de": "NetHome-Plus-Konto (optional)",
+        "es": "Cuenta NetHome Plus (opcional)"
+      },
+      "placeholder": {
+        "en": "e-mail address",
+        "fr": "adresse e-mail",
+        "de": "E-Mail-Adresse",
+        "es": "dirección de correo"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "cloud_password",
+      "type": "secret",
+      "label": {
+        "en": "NetHome Plus password (optional)",
+        "fr": "Mot de passe NetHome Plus (facultatif)",
+        "de": "NetHome-Plus-Passwort (optional)",
+        "es": "Contraseña NetHome Plus (opcional)"
+      },
+      "required": false
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "search",
+      "label": {
+        "en": "Search for air conditioners",
+        "fr": "Rechercher les climatiseurs",
+        "de": "Klimaanlagen suchen",
+        "es": "Buscar aires acondicionados"
+      },
+      "timeout_seconds": 120
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "filter_cleaning_needed",
+      "label": {
+        "en": "Filter needs cleaning",
+        "fr": "Filtre à nettoyer",
+        "de": "Filter muss gereinigt werden",
+        "es": "Filtro por limpiar"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "The air conditioner asks for its filter to be cleaned.",
+        "fr": "Le climatiseur demande le nettoyage de son filtre.",
+        "de": "Die Klimaanlage verlangt eine Reinigung ihres Filters.",
+        "es": "El aire acondicionado pide la limpieza de su filtro."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
+          "label": {
+            "en": "Air conditioner",
+            "fr": "Climatiseur",
+            "de": "Klimaanlage",
+            "es": "Aire acondicionado"
+          }
+        }
+      ]
+    },
+    {
+      "key": "unit_error",
+      "label": {
+        "en": "Unit error",
+        "fr": "Erreur du climatiseur",
+        "de": "Gerätefehler",
+        "es": "Error del equipo"
+      },
+      "description": {
+        "en": "The air conditioner reports a new error code.",
+        "fr": "Le climatiseur signale un nouveau code erreur.",
+        "de": "Die Klimaanlage meldet einen neuen Fehlercode.",
+        "es": "El aire acondicionado indica un nuevo código de error."
+      },
+      "fields": [
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Air conditioner",
+            "fr": "Climatiseur",
+            "de": "Klimaanlage",
+            "es": "Aire acondicionado"
+          }
         }
       ],
       "variables": [
         {
-          "key": "target",
-          "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "key": "error_code",
+          "type": "number",
+          "label": {
+            "en": "Error code",
+            "fr": "Code erreur",
+            "de": "Fehlercode",
+            "es": "Código de error"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "set_climate",
+      "label": {
+        "en": "Run the air conditioner",
+        "fr": "Lancer la climatisation",
+        "de": "Klimaanlage starten",
+        "es": "Poner en marcha el aire"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Turns the unit on with its mode, setpoint and fan in one command. An empty field keeps the current setting.",
+        "fr": "Allume le climatiseur avec son mode, sa consigne et sa ventilation en une seule commande. Un champ vide garde le réglage actuel.",
+        "de": "Schaltet das Gerät mit Modus, Sollwert und Lüfter in einem Befehl ein. Ein leeres Feld behält die aktuelle Einstellung.",
+        "es": "Enciende el equipo con su modo, consigna y ventilador en una sola orden. Un campo vacío conserva el ajuste actual."
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "required": true,
+          "label": {
+            "en": "Air conditioner",
+            "fr": "Climatiseur",
+            "de": "Klimaanlage",
+            "es": "Aire acondicionado"
+          }
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "label": { "en": "Mode", "fr": "Mode", "de": "Modus", "es": "Modo" },
+          "options": [
+            {
+              "value": "0",
+              "label": { "en": "Auto", "fr": "Auto", "de": "Automatisch", "es": "Automático" }
+            },
+            {
+              "value": "1",
+              "label": { "en": "Cool", "fr": "Froid", "de": "Kühlen", "es": "Frío" }
+            },
+            {
+              "value": "2",
+              "label": { "en": "Heat", "fr": "Chaud", "de": "Heizen", "es": "Calor" }
+            },
+            {
+              "value": "3",
+              "label": {
+                "en": "Dry",
+                "fr": "Déshumidification",
+                "de": "Entfeuchten",
+                "es": "Deshumidificación"
+              }
+            },
+            {
+              "value": "4",
+              "label": {
+                "en": "Fan only",
+                "fr": "Ventilation",
+                "de": "Nur Lüften",
+                "es": "Solo ventilación"
+              }
+            }
+          ]
+        },
+        {
+          "key": "target_temperature",
+          "type": "string",
+          "label": {
+            "en": "Setpoint (°C)",
+            "fr": "Consigne (°C)",
+            "de": "Sollwert (°C)",
+            "es": "Consigna (°C)"
+          },
+          "placeholder": {
+            "en": "e.g. 24.5",
+            "fr": "ex. 24,5",
+            "de": "z. B. 24,5",
+            "es": "p. ej. 24,5"
+          }
+        },
+        {
+          "key": "fan_speed",
+          "type": "select",
+          "label": {
+            "en": "Fan speed",
+            "fr": "Vitesse de ventilation",
+            "de": "Lüfterstufe",
+            "es": "Velocidad del ventilador"
+          },
+          "options": [
+            {
+              "value": "0",
+              "label": { "en": "Auto", "fr": "Auto", "de": "Automatisch", "es": "Automática" }
+            },
+            {
+              "value": "6",
+              "label": { "en": "Silent", "fr": "Silencieux", "de": "Leise", "es": "Silenciosa" }
+            },
+            {
+              "value": "1",
+              "label": { "en": "Low", "fr": "Basse", "de": "Niedrig", "es": "Baja" }
+            },
+            {
+              "value": "3",
+              "label": { "en": "Medium", "fr": "Moyenne", "de": "Mittel", "es": "Media" }
+            },
+            { "value": "5", "label": { "en": "High", "fr": "Haute", "de": "Hoch", "es": "Alta" } },
+            {
+              "value": "7",
+              "label": { "en": "Maximum", "fr": "Maximale", "de": "Maximal", "es": "Máxima" }
+            }
+          ]
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "target_temperature",
+          "type": "number",
+          "label": {
+            "en": "Setpoint applied (°C)",
+            "fr": "Consigne appliquée (°C)",
+            "de": "Übernommener Sollwert (°C)",
+            "es": "Consigna aplicada (°C)"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "climate",
+      "label": {
+        "en": "Air conditioner",
+        "fr": "Climatiseur",
+        "de": "Klimaanlage",
+        "es": "Aire acondicionado"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Room and setpoint, mode, fan, filter; on/off, setpoint and mode buttons.",
+        "fr": "Pièce et consigne, mode, ventilation, filtre ; boutons marche, consigne et mode.",
+        "de": "Raum und Sollwert, Modus, Lüfter, Filter; Tasten für Ein/Aus, Sollwert und Modus.",
+        "es": "Estancia y consigna, modo, ventilador, filtro; botones de encendido, consigna y modo."
+      },
+      "icon": "thermometer",
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Air conditioner",
+            "fr": "Climatiseur",
+            "de": "Klimaanlage",
+            "es": "Aire acondicionado"
+          }
+        }
+      ],
+      "action_timeout_seconds": 30
     }
   ]
 }

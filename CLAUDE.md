@@ -16,12 +16,13 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/hub.test.js              # one file
+node --test --test-name-pattern "V3"      # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
 npx github:GladysAssistant/integration-store .   # store admission checks
+node scripts/probe.mjs --cloud | --host <ip>     # read-only check of the real cloud / a real unit
 ```
 
 The CI (`.github/workflows/ci.yml`) runs `format:check`, `lint` and `test` on
@@ -32,14 +33,28 @@ pushing.
 
 ```
 index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/app.js                        registers every handler on the SDK (or its fake), returns the hub
+src/hub.js                        discovery, V3 keys, own polling timer, states, commands, triggers
+src/devices.js                    the Gladys device of a unit: features, names (4 languages), values, commands
+src/midea/security.js             AES (V2 fixed key, V3 session key), MD5 signature, udpid
+src/midea/packet.js               V2 packets (0x5A5A) and V3 "8370" envelopes
+src/midea/frame.js                AA command frames, CRC-8, checksum
+src/midea/ac.js                   air conditioner (0xAC) commands and responses
+src/midea/discovery.js            discovery request and reply parsing
+src/midea/udp.js                  unicast discovery of a typed address
+src/midea/lan.js                  one TCP session per unit (V3 handshake, retries, serialized requests)
+src/midea/cloud.js                NetHome Plus cloud: token and key of a V3 unit, nothing else
+src/store.js                      /data/midea-state.json (units, capabilities, V3 keys; mode 0600)
+src/problems.js                   repeated failures logged once, and their end once
+src/texts.js                      connection status and search report texts (4 languages)
+src/scenes.js                     scene action `set_climate`
+src/widgets.js                    widget `climate`
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
+scripts/probe.mjs                 read-only probe of the real cloud and of a real unit
+test/fixtures/msmart-vectors.json packets, commands and decodings produced by msmart-ng itself
+test/helpers/fakeMidea.js         fake units (V2/V3) on a fake network, fake cloud
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
@@ -70,8 +85,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in four languages (English, French, German with
+  "du", Spanish with "usted"): action messages, manifest texts, feature names,
+  widget texts, and `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md` with
+  the same sections. `test/i18n.test.js` enforces it.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +250,41 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Midea : protocole et pièges (cette intégration)
+
+- **Références** : `mill1000/midea-msmart` (msmart-ng, MIT) pour les paquets, la poignée de main V3,
+  les commandes et réponses de la clim, et le client NetHome Plus ; `midea-lan/midea-local` (MIT) pour la
+  découverte et les recoupements. Leurs avis MIT sont dans `THIRD_PARTY_NOTICES.md`, copié dans
+  l'image : à garder à jour si on reporte d'autre code.
+- **Vecteurs de test produits par msmart-ng lui-même** (`test/fixtures/msmart-vectors.json`) : le script
+  qui les génère vit hors du dépôt ; il exécute msmart-ng sur des entrées fixes et anonymise les réponses
+  de découverte (déchiffrées, IP/numéro de série/SSID/id remplacés, rechiffrées, resignées). Ce
+  recoupement a trouvé deux bugs du portage (requête de découverte de 80 octets au lieu de 72, défaut de
+  `freezeProtection`) : tout nouveau décodage se vérifie de la même façon, pas à l'œil.
+- **Découverte médiée** : `udp-active-broadcast` ne prend **qu'un port par appel** et le cœur n'accepte
+  qu'**un scan par 10 s** (429 sinon) : 6445 puis 20086 avec 10,5 s d'écart (`scanGapMs`). Les adresses
+  saisies passent par un unicast depuis le conteneur (`src/midea/udp.js`), qui traverse le NAT.
+- **V3** : jeton et clé rangés par le cloud sous l'« udpid » de l'appareil (SHA-256 de l'id sur 6
+  octets, petit ou grand boutiste selon le module : essayer les deux, chaque paire vérifiée par une vraie
+  poignée de main). Comptes NetHome Plus publics par région (pratique de msmart-ng). Clé refusée plus tard
+  (appareil réappairé) : la redemander une fois. La clé de session expire au bout de 12 h.
+- **Commandes** : l'appareil n'a pas de commande partielle, chaque trame de contrôle porte tous les
+  réglages ; il faut donc l'état courant avant toute commande. Éco et turbo s'excluent. Le bip est
+  désactivé par défaut (scènes de nuit).
+- **Fonctionnalités dérivées des capacités** (requête 0xB5, parfois sur deux pages) ; un appareil qui ne
+  répond pas à la requête prend les défauts de msmart-ng. Un appareil n'est publié qu'une fois ses
+  capacités connues, pour éviter un « Mettre à jour » dès le premier contact. La température extérieure
+  n'apparaît qu'après une première valeur (0xFF = pas de sonde).
+- **Widget** : les `label` des champs d'un formulaire de bouton doivent être des objets multilingues
+  (une chaîne simple fait jeter le bouton par `validateWidgetContent`) ; le budget de 8 composants
+  compte aussi le texte d'en-tête : 3 tuiles + 1 statut + 4 boutons, l'injoignabilité passe dans le
+  statut.
+- **Faux Gladys du SDK 0.15** : `fake.transports` est une liste à plat de `{ device_external_id,
+transport }` ; l'ack d'une action donne `data.message`, celui d'un widget `data.content`, celui d'une
+  action de scène `data.outputs`.
+- **Test des journaux** : simuler `process.stdout.write` avale aussi les comptes rendus du lanceur
+  `node --test` (un test en échec avait disparu du total). Ne capturer que les lignes du logger
+  (`[2026-…]`) et laisser passer le reste.
+- **Session de code** : le proxy refuse `mapp.appsmb.com`, et le `fetch` de Node n'utilise pas
+  `HTTPS_PROXY` : le cloud se vérifie avec `scripts/probe.mjs` depuis une machine qui a le réseau.

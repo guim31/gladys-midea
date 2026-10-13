@@ -1,0 +1,442 @@
+{
+  "v2": {
+    "deviceId": 694488913125,
+    "now": "2026-10-13T18:42:07.530000Z",
+    "frame": "aa21ac8d000000000003418100ff03ff000200000000000000000000000003016971",
+    "packet": "5a5a0111680020000000000035072a120d0a1a14e5d4c3b2a1000000000000000000000000000000b8436dd15e84d5a4fc6fbf77d2b12486e10c552981b23022cb71ea0fc54dc25ecfa0ce55888ac57fc42a7eacc3285d37717c37a6c76aed1959b5e026ad20d72f"
+  },
+  "v3": {
+    "token": "101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+    "key": "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+    "handshakeRequestPayload": "101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+    "handshakeAnswer": "8370004020010000526c8fac7b362ed98d1c9336a37caf46b9c2c2068f5d58b49cb9f58db858825bca2a4fe727faaecf16ecd130a86e0885c5540c05375340445071c0657555fd42",
+    "localKey": "e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0",
+    "packetId": 7,
+    "padByte": 238,
+    "request": "8370008e2066debaaebe0deb10a98f29575853034b4611363766d2ecc715aa8ac2c3a4be4b216b5b1d947a4f0fcf6337d78835b934d0cde335f5e869c4db043689c7a176e3c22537d46f86e81c85e9c7f8c5b0ffde53446e8103caaaf1ae23a17d33fae76d074e9515ab36a52fa0f1efd67a58effcdf0a5cf4c3dfed8cc77123d106944533a3f0c6d5bb5d8ded6d27eb53ed556c6649",
+    "response": "8370008e2063debaaebe0deb10a98f29575853034b4611363766d2ecc715aa8ac2c3a4be4b216b5b1d947a4f0fcf6337d78835b934d0cde335f5e869c4db043689c7a176e3c22537d46f86e81c85e9c7f8c5b0ffde53446e8103caaaf1ae23a17d33fae76d074e9515ab36a52fa0f1efd67a58effcdffd418b1842f4cae2209246512c228a8a1357d7ac42aa9099f07335ed5ed36ea9",
+    "payload": "5a5a0111680020000000000035072a120d0a1a14e5d4c3b2a1000000000000000000000000000000b8436dd15e84d5a4fc6fbf77d2b12486e10c552981b23022cb71ea0fc54dc25ecfa0ce55888ac57fc42a7eacc3285d37717c37a6c76aed1959b5e026ad20d72f"
+  },
+  "discovery": [
+    {
+      "reply": "5a5a011178007a80000000000000000000000000eeffc000001e000000000000000000000100000019b162641daba9127af56930f883e9ad32ed85626b17fc6a61befe975571b326e45fedffccdfb5a4d04ffbc9274cde16f2323920a8b899f2165b73b10aaee748ecd366ccf804b6bb43ca552f383577a9",
+      "sourceIp": "192.0.2.21",
+      "expected": {
+        "ip": "192.0.2.21",
+        "port": 6444,
+        "device_id": 32985361481710,
+        "name": "net_ac_EE01",
+        "sn": "000000P0000000Q1AABBCCDDEE010000",
+        "device_type": 172,
+        "version": 2
+      }
+    },
+    {
+      "reply": "837000c8200f00005a5a0111b8007a80000000006143370206081714eeffc000008600000000000000000180000000000988b3d7764168d9d7b26627d9d9c28332ed85626b17fc6a61befe975571b3268826e5c30f8e55893a2915b47fc4e3569696d03007126329922a081236cd6ff54bdfb3e16e33d88768cc4c3d0658937d4bdfb3e16e33d88768cc4c3d0658937d4bdfb3e16e33d88768cc4c3d0658937d0bb19369bf0317b24d3a4de9e6a131067d368980b9e8dd83e4c8c9a0237005db00000000000000000000000000000000",
+      "sourceIp": "192.0.2.22",
+      "expected": {
+        "ip": "192.0.2.22",
+        "port": 6444,
+        "device_id": 147334570770414,
+        "name": "net_ac_EE02",
+        "sn": "000000P0000000Q1AABBCCDDEE020000",
+        "device_type": 172,
+        "version": 3
+      }
+    }
+  ],
+  "getState": "aa21ac00000000000003418100ff03ff00020000000000000000000000000310aaae",
+  "getCapabilities": "aa0fac00000000000003b501002098d4",
+  "getCapabilitiesMore": "aa10ac00000000000003b5010101210068",
+  "getGroup4": "aa20ac00000000000003412101440000000000000000000000000000000030d684",
+  "getGroup5": "aa20ac00000000000003412101450000000000000000000000000000000031ea6e",
+  "setState": [
+    {
+      "state": {
+        "power_on": true,
+        "target_temperature": 24.5,
+        "operational_mode": 2,
+        "fan_speed": 102,
+        "swing_mode": 12,
+        "eco": false,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": false,
+        "beep_on": true
+      },
+      "id": 64,
+      "frame": "aa24ac00000000000002404358667f7f003c00000000000000000000002800000000400c3f"
+    },
+    {
+      "state": {
+        "power_on": false,
+        "target_temperature": 16.0,
+        "operational_mode": 4,
+        "fan_speed": 40,
+        "swing_mode": 15,
+        "eco": true,
+        "turbo": true,
+        "sleep": true,
+        "fahrenheit": true,
+        "beep_on": false
+      },
+      "id": 65,
+      "frame": "aa24ac00000000000002400280287f7f003f20800700000000000000042800000000416d86"
+    },
+    {
+      "state": {
+        "power_on": true,
+        "target_temperature": 31.0,
+        "operational_mode": 1,
+        "fan_speed": 60,
+        "swing_mode": 3,
+        "eco": false,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": false,
+        "beep_on": true,
+        "freeze_protection": true,
+        "target_humidity": 55
+      },
+      "id": 66,
+      "frame": "aa24ac000000000000024043203c7f7f003300000000000000000000133700800000424bc7"
+    }
+  ],
+  "states": [
+    {
+      "frame": "aa1eac00000000000003c0004b1e7f7f000000000069630000000000000d33",
+      "expected": {
+        "power": false,
+        "targetTemperature": 27.0,
+        "mode": 2,
+        "fanSpeed": 30,
+        "swing": 0,
+        "eco": false,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": false,
+        "indoorTemperature": 27.5,
+        "outdoorTemperature": 24.5,
+        "filterAlert": false,
+        "errorCode": 0,
+        "targetHumidity": null,
+        "freezeProtection": null
+      }
+    },
+    {
+      "frame": "aa22ac00000000000303c0014566000000300010045eff00000000000000000069fdb9",
+      "expected": {
+        "power": true,
+        "targetTemperature": 21.0,
+        "mode": 2,
+        "fanSpeed": 102,
+        "swing": 0,
+        "eco": true,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": true,
+        "indoorTemperature": 22.0,
+        "outdoorTemperature": null,
+        "filterAlert": false,
+        "errorCode": 0,
+        "targetHumidity": 0,
+        "freezeProtection": false
+      }
+    },
+    {
+      "frame": "aa23ac00000000000303c00145660000003c0010045c6b20000000000000000000020d79",
+      "expected": {
+        "power": true,
+        "targetTemperature": 21.0,
+        "mode": 2,
+        "fanSpeed": 102,
+        "swing": 12,
+        "eco": true,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": true,
+        "indoorTemperature": 21.0,
+        "outdoorTemperature": 28.5,
+        "filterAlert": true,
+        "errorCode": 0,
+        "targetHumidity": 0,
+        "freezeProtection": false
+      }
+    },
+    {
+      "frame": "aa23ac00000000000203c00188647f7f000000000063450c0056190000000000000497c3",
+      "expected": {
+        "power": true,
+        "targetTemperature": 24.0,
+        "mode": 4,
+        "fanSpeed": 100,
+        "swing": 0,
+        "eco": false,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": false,
+        "indoorTemperature": 24.6,
+        "outdoorTemperature": 9.5,
+        "filterAlert": false,
+        "errorCode": 25,
+        "targetHumidity": 0,
+        "freezeProtection": false
+      }
+    },
+    {
+      "frame": "aa23ac00000000000203c00188647f7f000000000067450c00750000000000000001a3b0",
+      "expected": {
+        "power": true,
+        "targetTemperature": 24.0,
+        "mode": 4,
+        "fanSpeed": 100,
+        "swing": 0,
+        "eco": false,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": false,
+        "indoorTemperature": 26.5,
+        "outdoorTemperature": 9.7,
+        "filterAlert": false,
+        "errorCode": 0,
+        "targetHumidity": 0,
+        "freezeProtection": false
+      }
+    },
+    {
+      "frame": "aa23ac00000000000203c00188647f7f000080000064450c00501d00000000000001508e",
+      "expected": {
+        "power": true,
+        "targetTemperature": 24.0,
+        "mode": 4,
+        "fanSpeed": 100,
+        "swing": 0,
+        "eco": false,
+        "turbo": false,
+        "sleep": false,
+        "fahrenheit": false,
+        "indoorTemperature": 25.0,
+        "outdoorTemperature": 9.5,
+        "filterAlert": false,
+        "errorCode": 29,
+        "targetHumidity": 0,
+        "freezeProtection": false
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "frame": "aa29ac00000000000303b5071202010113020101140201011502010116020101170201001a020101dedb",
+      "expected": {
+        "more": false,
+        "eco": true,
+        "turbo": true,
+        "heat": true,
+        "cool": true,
+        "dry": true,
+        "auto": true,
+        "swingVertical": true,
+        "swingHorizontal": true,
+        "fanSilent": false,
+        "fanLow": true,
+        "fanMedium": true,
+        "fanHigh": true,
+        "fanAuto": true,
+        "fanCustom": false,
+        "energy": false,
+        "filter": false,
+        "humidity": false,
+        "minTemperature": 16,
+        "maxTemperature": 30
+      }
+    },
+    {
+      "frame": "aa3dac00000000000203b50a12020101180001001402010115020101160201001a020101100201011f020100250207203c203c203c00400001000100c83a",
+      "expected": {
+        "more": true,
+        "eco": true,
+        "turbo": true,
+        "heat": true,
+        "cool": true,
+        "dry": true,
+        "auto": true,
+        "swingVertical": true,
+        "swingHorizontal": true,
+        "fanSilent": true,
+        "fanLow": true,
+        "fanMedium": true,
+        "fanHigh": true,
+        "fanAuto": true,
+        "fanCustom": true,
+        "energy": false,
+        "filter": false,
+        "humidity": false,
+        "minTemperature": 16.0,
+        "maxTemperature": 30.0
+      }
+    },
+    {
+      "frame": "aa29ac00000000000303b507120201021402010015020102170201021a0201021002010524020101990d",
+      "expected": {
+        "more": false,
+        "eco": true,
+        "turbo": false,
+        "heat": false,
+        "cool": true,
+        "dry": true,
+        "auto": true,
+        "swingVertical": false,
+        "swingHorizontal": false,
+        "fanSilent": false,
+        "fanLow": true,
+        "fanMedium": true,
+        "fanHigh": true,
+        "fanAuto": true,
+        "fanCustom": false,
+        "energy": false,
+        "filter": true,
+        "humidity": false,
+        "minTemperature": 16,
+        "maxTemperature": 30
+      }
+    },
+    {
+      "frame": "aa39ac00000000000303b50912020102130201001402010015020100170201021a02010010020101250207203c203c203c00240201010102a1a0",
+      "expected": {
+        "more": true,
+        "eco": true,
+        "turbo": true,
+        "heat": false,
+        "cool": true,
+        "dry": true,
+        "auto": true,
+        "swingVertical": true,
+        "swingHorizontal": false,
+        "fanSilent": true,
+        "fanLow": true,
+        "fanMedium": true,
+        "fanHigh": true,
+        "fanAuto": true,
+        "fanCustom": true,
+        "energy": false,
+        "filter": true,
+        "humidity": false,
+        "minTemperature": 16.0,
+        "maxTemperature": 30.0
+      }
+    },
+    {
+      "frame": "aa3dac00000000000303b50a12020101430001011402010115020101160201001a020101100201011f020103250207203c203c203c05400001000100c805",
+      "expected": {
+        "more": true,
+        "eco": true,
+        "turbo": true,
+        "heat": true,
+        "cool": true,
+        "dry": true,
+        "auto": true,
+        "swingVertical": true,
+        "swingHorizontal": true,
+        "fanSilent": true,
+        "fanLow": true,
+        "fanMedium": true,
+        "fanHigh": true,
+        "fanAuto": true,
+        "fanCustom": true,
+        "energy": false,
+        "filter": false,
+        "humidity": true,
+        "minTemperature": 16.0,
+        "maxTemperature": 30.0
+      }
+    }
+  ],
+  "energy": [
+    {
+      "frame": "aa1fac00000000000303c121014400067920000000000000000000000000aabf",
+      "expected": {
+        "bcd": {
+          "totalEnergy": 679.2,
+          "power": 0.0
+        },
+        "binary": {
+          "totalEnergy": 42422.4,
+          "power": 0.0
+        }
+      }
+    },
+    {
+      "frame": "aa20ac00000000000203c121014400564a02640000000014ae0000000000041a22",
+      "expected": {
+        "bcd": {
+          "totalEnergy": 5650.02,
+          "power": 0.0
+        },
+        "binary": {
+          "totalEnergy": 565504.2,
+          "power": 0.0
+        }
+      }
+    },
+    {
+      "frame": "aa20ac00000000000303c1210144000000000000000000000000000000000843bc",
+      "expected": {
+        "bcd": {
+          "totalEnergy": null,
+          "power": null
+        },
+        "binary": {
+          "totalEnergy": null,
+          "power": null
+        }
+      }
+    },
+    {
+      "frame": "aa22ac00000000000803c1210144000005e00000000000000006000aeb000000487a5e",
+      "expected": {
+        "bcd": {
+          "totalEnergy": 6.4,
+          "power": 115.1
+        },
+        "binary": {
+          "totalEnergy": 150.4,
+          "power": 279.5
+        }
+      }
+    }
+  ],
+  "humidity": [
+    {
+      "frame": "aa20ac00000000000303c12101453f546c005d0a000000de1f0000ba9a0004af9c",
+      "expected": 63
+    },
+    {
+      "frame": "aa1fac00000000000303c1210145000000000000000000000000000000001aed",
+      "expected": null
+    }
+  ],
+  "cloud": {
+    "path": "/v1/user/login/id/get",
+    "body": {
+      "appId": "1017",
+      "src": "1017",
+      "format": 2,
+      "clientType": 1,
+      "language": "en_US",
+      "deviceId": "0123456789abcdef",
+      "stamp": "20261013184207",
+      "sessionId": "",
+      "loginAccount": "someone+test@example.com"
+    },
+    "sign": "0c307f409ee6728a7216b4e7917c907593cb55f1a08f517fba69f23dd4170f28",
+    "loginId": "a1b2c3",
+    "password": "not-a-real-password",
+    "passwordHash": "923b15999062f97a644d4e25d247cc48b3fab539300007670dfe06bab2ff83c2"
+  },
+  "udpid": {
+    "deviceId": 828927516160,
+    "little": "ea89d9ca66b5a2982a92e99bcf9d756c",
+    "big": "6adae7bf8bf1549236e9b1d344cacf8c"
+  },
+  "discoveryRequest": "5a5a01114800920000000000000000000000000000000000000000000000000000000000000000007f75bd6b3e4f8b762e849c6e578d6590036e9d4342a50f1f569eb8ec918e92e5"
+}
