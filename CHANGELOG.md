@@ -10,8 +10,6 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-10-19
-
 ### Added
 
 - Actions "Diagnostic of the units" and "Test a unit" (Configuration tab,
@@ -21,6 +19,11 @@ the notes of the version's GitHub Release.
   and decoding. A typed address of an appliance not supported yet gets its
   discovery answer. Tokens, keys and passwords are never shown; ids, serial
   numbers and local addresses are masked unless asked.
+
+## [1.1.0] - 2026-10-19
+
+### Added
+
 - Air-to-water heat pumps (Midea appliance type `0xC3`, "Heat Pump Wi-Fi
   Controller" such as the 171H120F), ported from midea-local: one Gladys device
   per heat pump with the mode and setpoint of each heating zone (thermostat),
