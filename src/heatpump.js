@@ -536,7 +536,9 @@ function zoneLimits(record, state, zone) {
   if (!caps.water) {
     return caps;
   }
-  const own = state.mode === C3_MODE.COOL ? state.zoneCooling?.[zone] : state.zoneHeating?.[zone];
+  // In auto, the unit runs the mode it chose (modeAuto), as midea-local reads it.
+  const mode = state.mode === C3_MODE.AUTO ? state.modeAuto : state.mode;
+  const own = mode === C3_MODE.COOL ? state.zoneCooling?.[zone] : state.zoneHeating?.[zone];
   return own && own.min > 0 && own.max >= own.min ? { ...caps, ...own } : caps;
 }
 
@@ -570,6 +572,19 @@ export function heatPumpCommand(record, key, value) {
     next[ZONES[zone].power] = number !== THERMOSTAT_MODE.OFF;
     if (number !== THERMOSTAT_MODE.OFF) {
       next.mode = MODE_FROM_GLADYS[number];
+      // A water zone's setpoint must fit the new mode: never a 45 °C heating
+      // setpoint sent with the cooling mode (cooling stops at 25 °C).
+      for (let other = 0; other < ZONES.length; other += 1) {
+        if (record.caps.zones[other]?.water && Number.isFinite(next.zoneTargets[other])) {
+          const limits = zoneLimits(record, next, other);
+          next.zoneTargets[other] = clamp(
+            next.zoneTargets[other],
+            limits.min,
+            limits.max,
+            record.caps.zones[other].step,
+          );
+        }
+      }
     }
     return { basic: next };
   }
