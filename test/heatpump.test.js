@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   BODY_TYPE,
+  C3_MODE,
   MESSAGE_TYPE,
   SILENT_LEVEL,
   decodeC3Response,
@@ -20,7 +21,13 @@ import {
   setEcoCommand,
   setSilentCommand,
 } from '../src/midea/c3.js';
-import { HP_KEYS, OPERATING_STATE, THERMOSTAT_MODE, heatPumpIds } from '../src/heatpump.js';
+import {
+  HP_KEYS,
+  OPERATING_STATE,
+  THERMOSTAT_MODE,
+  heatPumpCommand,
+  heatPumpIds,
+} from '../src/heatpump.js';
 import { TRIGGERS } from '../src/hub.js';
 import {
   FakeHeatPump,
@@ -472,8 +479,12 @@ test('a unit answering only the basic state: no sensors, protocol 0', async (t) 
   assert.ok(!keysOf(device).includes(HP_KEYS.POWER_DRAW));
   assert.ok(!keysOf(device).includes(HP_KEYS.ZONE1_STATE));
   assert.ok(!keysOf(device).includes(HP_KEYS.SUPER_SILENT));
+  // Protocol 0 for the frames; one lost appliance answer does not fix it for
+  // ever: it is asked again until three tries went unanswered.
+  assert.equal(pump.frames.at(-1)[8], 0, 'the frames still carry protocol 0');
+  for (let i = 0; i < 3; i += 1) await world.hub.pollAll({ force: true });
   assert.equal(world.hub.records.get(pump.id).protocol, 0);
-  // The parameters are not asked again at every read.
+  // Then the parameters and the protocol are not asked again at every read.
   const before = pump.frames.length;
   await world.hub.pollAll({ force: true });
   assert.equal(pump.frames.length, before + 1);
@@ -578,4 +589,43 @@ test('a restart keeps the heat pump and its features, without asking the unit fi
   });
   t.after(() => again.app.stop());
   assert.deepEqual(deviceOf(again, pump), before);
+});
+
+test('a mode change brings the water setpoints within the new mode, auto included', () => {
+  const record = {
+    caps: {
+      heat: true,
+      cool: true,
+      doubleZone: false,
+      zones: [
+        { water: true, min: 5, max: 65, step: 1 },
+        { water: true, min: 5, max: 65, step: 1 },
+      ],
+    },
+    state: {
+      mode: C3_MODE.HEAT,
+      modeAuto: C3_MODE.HEAT,
+      zone1Power: true,
+      zone2Power: false,
+      zoneTargets: [45, 45],
+      zoneHeating: [
+        { min: 25, max: 55 },
+        { min: 25, max: 55 },
+      ],
+      zoneCooling: [
+        { min: 5, max: 25 },
+        { min: 5, max: 25 },
+      ],
+    },
+  };
+  // Heating 45 °C → cooling: never 45 °C sent with the cooling mode.
+  const cool = heatPumpCommand(record, HP_KEYS.ZONE1_MODE, THERMOSTAT_MODE.COOLING).basic;
+  assert.equal(cool.mode, C3_MODE.COOL);
+  assert.deepEqual(cool.zoneTargets, [25, 25]);
+  // In auto, the limits are those of the mode the unit runs (modeAuto).
+  const auto = {
+    ...record,
+    state: { ...record.state, mode: C3_MODE.AUTO, modeAuto: C3_MODE.COOL },
+  };
+  assert.equal(heatPumpCommand(auto, HP_KEYS.ZONE1_TARGET, 40).basic.zoneTargets[0], 25);
 });

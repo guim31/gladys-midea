@@ -559,17 +559,23 @@ export class MideaHub {
     if (!isHeatPump(record)) {
       return record.lan.request(getStateCommand(), isState);
     }
-    if (record.protocol === null) {
+    let protocol = record.protocol;
+    if (protocol === null) {
       // The appliance answer gives the message protocol of every later frame;
-      // like midea-local, a unit that does not answer gets protocol 0.
+      // like midea-local, a unit that does not answer gets protocol 0. One lost
+      // answer does not fix it for ever: 0 is kept after three silent tries.
       const appliance = await record.lan.request(getApplianceCommand(), isApplianceAnswer, {
         optional: true,
         retries: 1,
       });
-      record.protocol = appliance ? decodeC3Response(appliance).protocol : 0;
+      protocol = appliance ? decodeC3Response(appliance).protocol : 0;
+      record.applianceMisses = appliance ? 0 : (record.applianceMisses ?? 0) + 1;
+      if (appliance || record.applianceMisses >= 3) {
+        record.protocol = protocol;
+      }
     }
     return record.lan.request(
-      getQueryCommand(BODY_TYPE.BASIC, { protocol: record.protocol }),
+      getQueryCommand(BODY_TYPE.BASIC, { protocol }),
       answersBody(BODY_TYPE.BASIC),
     );
   }
@@ -603,6 +609,9 @@ export class MideaHub {
         continue;
       }
       record.lan.update({ credentials });
+      // Other keys may reach another module: its protocol is asked again.
+      record.protocol = null;
+      record.applianceMisses = 0;
       try {
         await this.probe(record);
       } catch (err) {
@@ -695,7 +704,7 @@ export class MideaHub {
   /** The unit parameters, or null when the unit does not answer them. */
   async queryHeatPumpUnit(record) {
     const answer = await record.lan.request(
-      getQueryCommand(BODY_TYPE.UNIT, { protocol: record.protocol }),
+      getQueryCommand(BODY_TYPE.UNIT, { protocol: record.protocol ?? 0 }),
       answersBody(BODY_TYPE.UNIT),
       { optional: true, retries: 1 },
     );
@@ -713,7 +722,7 @@ export class MideaHub {
   /** The silent level (off, silent, super silent), or null without answer. */
   async queryHeatPumpSilence(record) {
     const answer = await record.lan.request(
-      getQueryCommand(BODY_TYPE.SILENCE, { protocol: record.protocol }),
+      getQueryCommand(BODY_TYPE.SILENCE, { protocol: record.protocol ?? 0 }),
       answersBody(BODY_TYPE.SILENCE),
       { optional: true, retries: 1 },
     );
@@ -1214,7 +1223,6 @@ export class MideaHub {
       frame = setSilentCommand(command.silentLevel, protocol);
       bodyType = BODY_TYPE.SILENCE;
       assumed = { ...record.state, silent: command.silentLevel !== SILENT_LEVEL.OFF };
-      record.silentLevel = command.silentLevel;
     }
     let answer;
     try {
@@ -1228,6 +1236,10 @@ export class MideaHub {
         throw new Error(`${this.label(record)} does not answer at ${record.host}`, { cause: err });
       }
       throw err;
+    }
+    // Only once sent: a failed command keeps the level the unit has.
+    if (command.silentLevel !== undefined) {
+      record.silentLevel = command.silentLevel;
     }
     let state = null;
     try {
