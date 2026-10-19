@@ -10,6 +10,16 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Added
+
+- Actions "Diagnostic of the units" and "Test a unit" (Configuration tab,
+  read-only): a text report to paste into a GitHub issue, with the
+  configuration, the discovery, each unit's protocol, keys, last answer and
+  last error, and, for the test, every query of the unit with its raw answer
+  and decoding. A typed address of an appliance not supported yet gets its
+  discovery answer. Tokens, keys and passwords are never shown; ids, serial
+  numbers and local addresses are masked unless asked.
+
 ## [1.1.0] - 2026-10-19
 
 ### Added

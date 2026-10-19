@@ -127,6 +127,9 @@ Turning the unit off, or changing a single setting, uses the standard "Control a
 - **The cloud gives no key** (some heat pumps): if Home Assistant's Midea AC LAN integration already talks to the unit, copy its token and key (in its saved configuration) into **Token and key typed by hand**, as `token:key`, then run **Search for air conditioners** again.
 - **The unit does not answer**: check that it is powered and that its address did not change; a module only accepts one connection at a time, so close other local tools that talk to it.
 - **Absurd power or energy values**: switch the **Energy data format** to "Binary".
+- **Diagnostic of the units** (Configuration tab, read-only): a text report of the installation: configuration without any token, key or password, discovery, the appliances found but not supported, then each unit (protocol, keys present or not, last answer, last error, capabilities, last state). Pick a unit to see it alone. Copy the report into a [GitHub issue](https://github.com/guim31/gladys-midea/issues).
+- **Test a unit** (Configuration tab, read-only): reads one unit now, picked in the list or by its IP address. Every query of its kind is sent, with the raw answer, its decoding and the answer time; no command is ever sent. For an address not known yet, the report gives the discovery answer: which appliance it is, and whether it is supported. This is what a request for a new Midea appliance needs.
+- Both reports shorten ids and serial numbers and hide local addresses, so they can be posted publicly. The option "Show ids, serial numbers and local addresses" shows them in full: keep that report private; the logs only keep the masked version.
 - **More details**: set the `LOG_LEVEL` environment variable of the container to `debug`.
 
 ## Limits

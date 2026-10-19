@@ -134,3 +134,35 @@ export function searchMessage(summary) {
   }
   return message;
 }
+
+// The intro of a diagnostic report (the report itself is in English, for the
+// GitHub issue it is pasted into).
+export const REPORT_INTROS = {
+  masked: {
+    en: 'Report below (also in the integration logs). Copy it as is into a GitHub issue: ids and serial numbers are shortened, local addresses hidden, and it never contains a token, a key nor a password.',
+    fr: "Rapport ci-dessous (aussi dans les journaux de l'intégration). Copiez-le tel quel dans une issue GitHub : identifiants et numéros de série sont raccourcis, adresses locales masquées, et il ne contient jamais de jeton, de clé ni de mot de passe.",
+    de: 'Bericht unten (auch in den Protokollen der Integration). Kopiere ihn unverändert in ein GitHub-Issue: IDs und Seriennummern sind gekürzt, lokale Adressen verborgen, und er enthält nie Token, Schlüssel oder Passwort.',
+    es: 'Informe a continuación (también en los registros de la integración). Cópielo tal cual en una issue de GitHub: identificadores y números de serie acortados, direcciones locales ocultas, y nunca contiene token, clave ni contraseña.',
+  },
+  full: {
+    en: 'Report below, WITH full ids, serial numbers and local addresses: do not post it publicly (the logs only keep the masked version). It never contains a token, a key nor a password.',
+    fr: "Rapport ci-dessous, AVEC identifiants, numéros de série et adresses locales complets : ne le publiez pas (les journaux n'en gardent que la version masquée). Il ne contient jamais de jeton, de clé ni de mot de passe.",
+    de: 'Bericht unten, MIT vollständigen IDs, Seriennummern und lokalen Adressen: nicht öffentlich posten (die Protokolle behalten nur die maskierte Fassung). Er enthält nie Token, Schlüssel oder Passwort.',
+    es: 'Informe a continuación, CON identificadores, números de serie y direcciones locales completos: no lo publique (los registros solo guardan la versión ocultada). Nunca contiene token, clave ni contraseña.',
+  },
+};
+
+export const DEVICE_REQUIRED = {
+  en: 'Pick a unit in the list, or type its IP address.',
+  fr: 'Choisissez un appareil dans la liste, ou saisissez son adresse IP.',
+  de: 'Wähle ein Gerät in der Liste, oder gib seine IP-Adresse ein.',
+  es: 'Elija un equipo en la lista, o escriba su dirección IP.',
+};
+
+/** A diagnostic report under its intro, in every language. */
+export function reportMessage(report, includeIdentifiers) {
+  const intro = REPORT_INTROS[includeIdentifiers ? 'full' : 'masked'];
+  return Object.fromEntries(
+    Object.entries(intro).map(([language, text]) => [language, `${text}\n\n${report}`]),
+  );
+}
