@@ -9,7 +9,8 @@ import { normalizeConfig } from './config.js';
 import { MideaHub } from './hub.js';
 import { SCENE_ACTIONS } from './scenes.js';
 import { Store } from './store.js';
-import { INIT_FAILED, searchMessage } from './texts.js';
+import { buildFleetReport, buildTestReport, findRecord } from './diagnostic.js';
+import { DEVICE_REQUIRED, INIT_FAILED, reportMessage, searchMessage } from './texts.js';
 import { WIDGETS } from './widgets.js';
 
 const logger = createLogger({ name: 'midea-app' });
@@ -83,6 +84,49 @@ export function registerHandlers(gladys, options = {}) {
       logger.info('Action: search for air conditioners');
       await hub.search();
       return searchMessage(hub.summary());
+    }),
+  );
+
+  // --- Diagnostics: read-only reports to paste into a GitHub issue ----------
+
+  /** A form boolean: true, or "true" / "1" / "on". */
+  const checked = (value) => value === true || ['true', '1', 'on'].includes(String(value));
+  /** The unit an action designates: picked in the list, or typed. */
+  const reference = (fields = {}) =>
+    String(fields.device ?? '').trim() || String(fields.device_ref ?? '').trim();
+
+  gladys.onAction(
+    'fleet_diagnostic',
+    whenReady(async (fields = {}) => {
+      logger.info('Action: diagnostic');
+      const includeIdentifiers = checked(fields.include_identifiers);
+      const ref = reference(fields);
+      const only = ref ? findRecord(hub, ref) : null;
+      const report = buildFleetReport(hub, { includeIdentifiers, only });
+      // The logs only ever keep the masked version.
+      logger.info(`[diagnostic]\n${buildFleetReport(hub, { only })}`);
+      return reportMessage(report, includeIdentifiers);
+    }),
+  );
+
+  gladys.onAction(
+    'test_device',
+    whenReady(async (fields = {}) => {
+      const ref = reference(fields);
+      if (!ref) {
+        return DEVICE_REQUIRED;
+      }
+      logger.info('Action: test a unit');
+      const includeIdentifiers = checked(fields.include_identifiers);
+      const report = await buildTestReport(hub, ref, { includeIdentifiers });
+      // A full report stays out of the logs; testing the unit again only to
+      // log a masked copy would send every query twice.
+      logger.info(
+        includeIdentifiers
+          ? '[diagnostic] unit test with full identifiers: not logged'
+          : `[diagnostic]\n${report}`,
+      );
+      return reportMessage(report, includeIdentifiers);
     }),
   );
 

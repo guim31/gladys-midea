@@ -15,6 +15,7 @@ This project is not affiliated with Midea.
 - **Refresh**: the integration reads every unit itself, every 30 seconds by default, and sends Gladys only what changed.
 - **Scenes**: triggers "Filter needs cleaning" and "Unit error" (with the error code); action "Run the air conditioner" (mode, setpoint and fan in one command).
 - **Widget** "Air conditioner": room, setpoint and outdoor temperature, mode, fan, filter, error code; on/off, setpoint and "Mode and fan" buttons.
+- **Diagnostics**: "Diagnostic of the units" and "Test a unit" build a read-only text report to paste into a GitHub issue (secrets never shown, identifiers masked by default); the test of a typed address tells which Midea appliance answers there.
 - English, French, German and Spanish.
 
 The criterion is the app the unit is set up in: SmartHome / MSmartHome, NetHome Plus, Midea Air, Toshiba AC NA or Arctic King (appliance type `0xAC`). See the [documentation](docs/en.md) ([français](docs/fr.md), [Deutsch](docs/de.md), [español](docs/es.md)).

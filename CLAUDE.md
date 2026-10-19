@@ -49,6 +49,7 @@ src/midea/cloud.js                NetHome Plus cloud: token and key of a V3 unit
 src/store.js                      /data/midea-state.json (units, capabilities, V3 keys; mode 0600)
 src/problems.js                   repeated failures logged once, and their end once
 src/texts.js                      connection status and search report texts (4 languages)
+src/diagnostic.js                 actions `fleet_diagnostic` and `test_device`: reports, redaction
 src/scenes.js                     scene action `set_climate`
 src/widgets.js                    widget `climate`
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization

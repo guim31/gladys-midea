@@ -296,6 +296,7 @@ export class MideaHub {
       const record = this.createRecord(saved);
       Object.assign(record, {
         credentials: saved.credentials?.token && saved.credentials?.key ? saved.credentials : null,
+        keySource: saved.credentials?.token ? 'saved' : null,
         rawCaps: saved.rawCaps ?? null,
         capsQueried: saved.capsQueried === true,
         hasOutdoor: saved.hasOutdoor === true,
@@ -379,6 +380,10 @@ export class MideaHub {
       // Bumped on every command: a poll started before it is stale.
       commandSeq: 0,
       lastPolledAt: 0,
+      // For the diagnostic report (src/diagnostic.js).
+      lastReadAt: 0,
+      lastError: null,
+      keySource: null,
       published: {},
     };
     record.caps = isHeatPump(record) ? null : summarizeCapabilities(null);
@@ -430,6 +435,11 @@ export class MideaHub {
         this.unsupported.set(info.deviceId, {
           type: `0x${info.type.toString(16).toUpperCase()}`,
           host: info.host,
+          // For the diagnostic report: what a request for support needs.
+          id: info.deviceId,
+          version: info.version,
+          model: info.model,
+          serial: info.serial,
         });
         continue;
       }
@@ -546,6 +556,7 @@ export class MideaHub {
           failure = again;
         }
       }
+      record.lastError = failure.message;
       if (failure.unreachable) {
         await this.failed(record, { now: true });
       } else {
@@ -628,6 +639,7 @@ export class MideaHub {
         throw err;
       }
       record.credentials = credentials;
+      record.keySource = attempt.typed ? 'typed' : 'cloud';
       record.keyProblem = null;
       this.problems.recover(`keys:${record.id}`, `${this.label(record)} has its keys`);
       logger.info(
@@ -1023,6 +1035,7 @@ export class MideaHub {
 
   /** A read that failed: counted when the unit does not answer, said once otherwise. */
   async readFailed(record, err) {
+    record.lastError = err.message;
     if (err.unreachable) {
       await this.failed(record);
     } else if (err.auth) {
@@ -1076,6 +1089,8 @@ export class MideaHub {
   async applyReading(record, state) {
     record.state = state;
     record.failures = 0;
+    record.lastReadAt = Date.now();
+    record.lastError = null;
     const heatPump = isHeatPump(record);
     let structureChanged = false;
     if (!heatPump && state.outdoorTemperature !== null && !record.hasOutdoor) {
@@ -1298,7 +1313,7 @@ export class MideaHub {
     return {
       scan: this.lastScan.status,
       invalidHosts: this.config.invalidHosts,
-      unsupported: [...this.unsupported.values()],
+      unsupported: [...this.unsupported.values()].map(({ type, host }) => ({ type, host })),
       devices: [...this.records.values()].map((record) => ({
         names: Object.fromEntries(
           LANGUAGES.map((language) => [language, this.name(record, language)]),

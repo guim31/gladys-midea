@@ -110,15 +110,30 @@
         },
         {
           "value": "60",
-          "label": { "en": "1 minute", "fr": "1 minute", "de": "1 Minute", "es": "1 minuto" }
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
         },
         {
           "value": "120",
-          "label": { "en": "2 minutes", "fr": "2 minutes", "de": "2 Minuten", "es": "2 minutos" }
+          "label": {
+            "en": "2 minutes",
+            "fr": "2 minutes",
+            "de": "2 Minuten",
+            "es": "2 minutos"
+          }
         },
         {
           "value": "300",
-          "label": { "en": "5 minutes", "fr": "5 minutes", "de": "5 Minuten", "es": "5 minutos" }
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
         }
       ]
     },
@@ -142,19 +157,39 @@
       "options": [
         {
           "value": "en",
-          "label": { "en": "English", "fr": "Anglais", "de": "Englisch", "es": "Inglés" }
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
         },
         {
           "value": "fr",
-          "label": { "en": "French", "fr": "Français", "de": "Französisch", "es": "Francés" }
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
         },
         {
           "value": "de",
-          "label": { "en": "German", "fr": "Allemand", "de": "Deutsch", "es": "Alemán" }
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
         },
         {
           "value": "es",
-          "label": { "en": "Spanish", "fr": "Espagnol", "de": "Spanisch", "es": "Español" }
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
         }
       ]
     },
@@ -205,7 +240,12 @@
         },
         {
           "value": "binary",
-          "label": { "en": "Binary", "fr": "Binaire", "de": "Binär", "es": "Binario" }
+          "label": {
+            "en": "Binary",
+            "fr": "Binaire",
+            "de": "Binär",
+            "es": "Binario"
+          }
         }
       ]
     },
@@ -245,13 +285,31 @@
       "options": [
         {
           "value": "DE",
-          "label": { "en": "Europe", "fr": "Europe", "de": "Europa", "es": "Europa" }
+          "label": {
+            "en": "Europe",
+            "fr": "Europe",
+            "de": "Europa",
+            "es": "Europa"
+          }
         },
         {
           "value": "US",
-          "label": { "en": "Americas", "fr": "Amériques", "de": "Amerika", "es": "América" }
+          "label": {
+            "en": "Americas",
+            "fr": "Amériques",
+            "de": "Amerika",
+            "es": "América"
+          }
         },
-        { "value": "KR", "label": { "en": "Asia", "fr": "Asie", "de": "Asien", "es": "Asia" } }
+        {
+          "value": "KR",
+          "label": {
+            "en": "Asia",
+            "fr": "Asie",
+            "de": "Asien",
+            "es": "Asia"
+          }
+        }
       ]
     },
     {
@@ -311,6 +369,135 @@
         "es": "Buscar aires acondicionados"
       },
       "timeout_seconds": 120
+    },
+    {
+      "key": "fleet_diagnostic",
+      "label": {
+        "en": "Diagnostic of the units",
+        "fr": "Diagnostic des appareils",
+        "de": "Diagnose der Geräte",
+        "es": "Diagnóstico de los equipos"
+      },
+      "description": {
+        "en": "A text report of the installation: configuration (without token, key nor password), discovery, then each unit (protocol, keys, last answer, last error, capabilities, last state). Copy it into a GitHub issue. Read-only.",
+        "fr": "Un rapport texte de l'installation : configuration (sans jeton, clé ni mot de passe), découverte, puis chaque appareil (protocole, clés, dernière réponse, dernière erreur, capacités, dernier état). Copiez-le dans une issue GitHub. Lecture seule.",
+        "de": "Ein Textbericht der Installation: Konfiguration (ohne Token, Schlüssel oder Passwort), Erkennung, dann jedes Gerät (Protokoll, Schlüssel, letzte Antwort, letzter Fehler, Fähigkeiten, letzter Zustand). Kopiere ihn in ein GitHub-Issue. Nur lesend.",
+        "es": "Un informe de texto de la instalación: configuración (sin token, clave ni contraseña), descubrimiento y luego cada equipo (protocolo, claves, última respuesta, último error, capacidades, último estado). Cópielo en una issue de GitHub. Solo lectura."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": false,
+          "label": {
+            "en": "Device",
+            "fr": "Appareil",
+            "de": "Gerät",
+            "es": "Dispositivo"
+          },
+          "description": {
+            "en": "Pick a unit to diagnose it alone, or leave empty for every unit.",
+            "fr": "Choisissez un appareil pour le diagnostiquer seul, ou laissez vide pour tous les appareils.",
+            "de": "Wähle ein Gerät, um nur dieses zu diagnostizieren, oder lass das Feld leer für alle Geräte.",
+            "es": "Elija un equipo para diagnosticarlo solo, o deje vacío para todos los equipos."
+          }
+        },
+        {
+          "key": "include_identifiers",
+          "type": "boolean",
+          "default": false,
+          "label": {
+            "en": "Show ids, serial numbers and local addresses",
+            "fr": "Afficher identifiants, numéros de série et adresses locales",
+            "de": "IDs, Seriennummern und lokale Adressen anzeigen",
+            "es": "Mostrar ids, números de serie y direcciones locales"
+          },
+          "description": {
+            "en": "Off: ids and serial numbers are shortened and local IP addresses hidden, so the report can be posted publicly. On: shown in full, keep the report private.",
+            "fr": "Désactivé : identifiants et numéros de série sont raccourcis et les adresses IP locales masquées, le rapport peut être publié. Activé : affichés en entier, gardez le rapport privé.",
+            "de": "Aus: IDs und Seriennummern werden gekürzt und lokale IP-Adressen verborgen, der Bericht kann öffentlich gepostet werden. An: vollständig angezeigt, Bericht privat halten.",
+            "es": "Desactivado: identificadores y números de serie se acortan y las direcciones IP locales se ocultan, el informe puede publicarse. Activado: se muestran completos, mantenga el informe privado."
+          }
+        }
+      ]
+    },
+    {
+      "key": "test_device",
+      "label": {
+        "en": "Test a unit",
+        "fr": "Tester un appareil",
+        "de": "Ein Gerät testen",
+        "es": "Probar un equipo"
+      },
+      "description": {
+        "en": "Reads a unit once, now: every query of its kind with the raw answer, its decoding and the answer time. A typed address not known yet gets the discovery answer: which appliance it is and whether it is supported. Never sends a command.",
+        "fr": "Lit un appareil une fois, tout de suite : chaque requête de son type avec la réponse brute, son décodage et le temps de réponse. Une adresse saisie encore inconnue reçoit la réponse de découverte : quel appareil c'est et s'il est pris en charge. N'envoie jamais de commande.",
+        "de": "Liest ein Gerät einmal, sofort: jede Abfrage seines Typs mit der Rohantwort, ihrer Dekodierung und der Antwortzeit. Eine eingegebene, noch unbekannte Adresse erhält die Erkennungsantwort: welches Gerät es ist und ob es unterstützt wird. Sendet nie einen Befehl.",
+        "es": "Lee un equipo una vez, ahora: cada consulta de su tipo con la respuesta en bruto, su decodificación y el tiempo de respuesta. Una dirección escrita aún desconocida recibe la respuesta de descubrimiento: qué aparato es y si es compatible. Nunca envía una orden."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": false,
+          "label": {
+            "en": "Device",
+            "fr": "Appareil",
+            "de": "Gerät",
+            "es": "Dispositivo"
+          },
+          "description": {
+            "en": "Pick the unit in the list of devices created in Gladys.",
+            "fr": "Choisissez l'appareil dans la liste des appareils créés dans Gladys.",
+            "de": "Wähle das Gerät aus der Liste der in Gladys angelegten Geräte.",
+            "es": "Elija el equipo en la lista de dispositivos creados en Gladys."
+          }
+        },
+        {
+          "key": "device_ref",
+          "type": "string",
+          "required": false,
+          "label": {
+            "en": "…or its IP address",
+            "fr": "…ou son adresse IP",
+            "de": "…oder seine IP-Adresse",
+            "es": "…o su dirección IP"
+          },
+          "description": {
+            "en": "For a unit not created in Gladys, or another Midea appliance.",
+            "fr": "Pour un appareil non créé dans Gladys, ou un autre appareil Midea.",
+            "de": "Für ein nicht in Gladys angelegtes Gerät oder ein anderes Midea-Gerät.",
+            "es": "Para un equipo no creado en Gladys, u otro aparato Midea."
+          },
+          "placeholder": {
+            "en": "e.g. 192.168.1.60",
+            "fr": "ex. 192.168.1.60",
+            "de": "z. B. 192.168.1.60",
+            "es": "p. ej. 192.168.1.60"
+          }
+        },
+        {
+          "key": "include_identifiers",
+          "type": "boolean",
+          "default": false,
+          "label": {
+            "en": "Show ids, serial numbers and local addresses",
+            "fr": "Afficher identifiants, numéros de série et adresses locales",
+            "de": "IDs, Seriennummern und lokale Adressen anzeigen",
+            "es": "Mostrar ids, números de serie y direcciones locales"
+          },
+          "description": {
+            "en": "Off: ids and serial numbers are shortened and local IP addresses hidden, so the report can be posted publicly. On: shown in full, keep the report private.",
+            "fr": "Désactivé : identifiants et numéros de série sont raccourcis et les adresses IP locales masquées, le rapport peut être publié. Activé : affichés en entier, gardez le rapport privé.",
+            "de": "Aus: IDs und Seriennummern werden gekürzt und lokale IP-Adressen verborgen, der Bericht kann öffentlich gepostet werden. An: vollständig angezeigt, Bericht privat halten.",
+            "es": "Desactivado: identificadores y números de serie se acortan y las direcciones IP locales se ocultan, el informe puede publicarse. Activado: se muestran completos, mantenga el informe privado."
+          }
+        }
+      ]
     }
   ],
   "scene_triggers": [
@@ -425,19 +612,39 @@
         {
           "key": "mode",
           "type": "select",
-          "label": { "en": "Mode", "fr": "Mode", "de": "Modus", "es": "Modo" },
+          "label": {
+            "en": "Mode",
+            "fr": "Mode",
+            "de": "Modus",
+            "es": "Modo"
+          },
           "options": [
             {
               "value": "0",
-              "label": { "en": "Auto", "fr": "Auto", "de": "Automatisch", "es": "Automático" }
+              "label": {
+                "en": "Auto",
+                "fr": "Auto",
+                "de": "Automatisch",
+                "es": "Automático"
+              }
             },
             {
               "value": "1",
-              "label": { "en": "Cool", "fr": "Froid", "de": "Kühlen", "es": "Frío" }
+              "label": {
+                "en": "Cool",
+                "fr": "Froid",
+                "de": "Kühlen",
+                "es": "Frío"
+              }
             },
             {
               "value": "2",
-              "label": { "en": "Heat", "fr": "Chaud", "de": "Heizen", "es": "Calor" }
+              "label": {
+                "en": "Heat",
+                "fr": "Chaud",
+                "de": "Heizen",
+                "es": "Calor"
+              }
             },
             {
               "value": "3",
@@ -487,24 +694,57 @@
           "options": [
             {
               "value": "0",
-              "label": { "en": "Auto", "fr": "Auto", "de": "Automatisch", "es": "Automática" }
+              "label": {
+                "en": "Auto",
+                "fr": "Auto",
+                "de": "Automatisch",
+                "es": "Automática"
+              }
             },
             {
               "value": "6",
-              "label": { "en": "Silent", "fr": "Silencieux", "de": "Leise", "es": "Silenciosa" }
+              "label": {
+                "en": "Silent",
+                "fr": "Silencieux",
+                "de": "Leise",
+                "es": "Silenciosa"
+              }
             },
             {
               "value": "1",
-              "label": { "en": "Low", "fr": "Basse", "de": "Niedrig", "es": "Baja" }
+              "label": {
+                "en": "Low",
+                "fr": "Basse",
+                "de": "Niedrig",
+                "es": "Baja"
+              }
             },
             {
               "value": "3",
-              "label": { "en": "Medium", "fr": "Moyenne", "de": "Mittel", "es": "Media" }
+              "label": {
+                "en": "Medium",
+                "fr": "Moyenne",
+                "de": "Mittel",
+                "es": "Media"
+              }
             },
-            { "value": "5", "label": { "en": "High", "fr": "Haute", "de": "Hoch", "es": "Alta" } },
+            {
+              "value": "5",
+              "label": {
+                "en": "High",
+                "fr": "Haute",
+                "de": "Hoch",
+                "es": "Alta"
+              }
+            },
             {
               "value": "7",
-              "label": { "en": "Maximum", "fr": "Maximale", "de": "Maximal", "es": "Máxima" }
+              "label": {
+                "en": "Maximum",
+                "fr": "Maximale",
+                "de": "Maximal",
+                "es": "Máxima"
+              }
             }
           ]
         }
