@@ -15,6 +15,7 @@ export const FRAME_TYPE = {
 
 export const APPLIANCE = {
   AIR_CONDITIONER: 0xac,
+  HEAT_PUMP: 0xc3,
 };
 
 // CRC-8/MAXIM (reflected polynomial 0x8C), the table msmart-ng carries.

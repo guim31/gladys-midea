@@ -317,7 +317,7 @@ test('triggers: the filter alert and a new error code fire once each', async (t)
     world.fake.sceneEvents.map(({ key, data }) => [key, data]),
     [
       [TRIGGERS.FILTER, { device }],
-      [TRIGGERS.ERROR, { device, error_code: 5 }],
+      [TRIGGERS.ERROR, { device, error_code: 5, error_display: '5' }],
     ],
   );
 });
@@ -351,7 +351,7 @@ test('the search action reports every unit', async (t) => {
   t.after(() => world.app.stop());
   const ack = await world.fake.action('search', {});
   assert.equal(ack.success, true);
-  assert.match(ack.data.message.fr, /2 climatiseur\(s\), 2 répondent/);
+  assert.match(ack.data.message.fr, /2 appareil\(s\) Midea, 2 répondent/);
   assert.match(ack.data.message.fr, /192\.0\.2\.11, V3\): répond/);
   assert.match(ack.data.message.en, /Ignored addresses: nope/);
 });

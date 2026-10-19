@@ -14,6 +14,8 @@ Le critère est l'application, pas la marque sur l'appareil : un climatiseur (ty
 
 Midea fabrique pour de nombreuses marques ; les climatiseurs de marques liées comme Comfee, Carrier ou certaines gammes Toshiba utilisent souvent ces applications. Les splits, climatiseurs de fenêtre et mobiles parlent tous le même protocole.
 
+Les **pompes à chaleur air/eau** (type d'appareil Midea `0xC3`, le « Heat Pump Wi-Fi Controller » d'une pompe à chaleur hydraulique, par exemple le modèle 171H120F) sont aussi prises en charge : zones de chauffage, eau chaude sanitaire, modes éco et silencieux, températures d'eau et extérieure. Elles apparaissent dans l'onglet Découverte comme les climatiseurs.
+
 Non pris en charge : les autres appareils Midea (déshumidificateurs, chauffe-eau...), que la recherche signale « non pris en charge », et les tout premiers modules Wi-Fi (protocole V1, vers 2015).
 
 ## Prérequis
@@ -33,6 +35,7 @@ Non pris en charge : les autres appareils Midea (déshumidificateurs, chauffe-ea
    - **Bip à chaque commande** : désactivé par défaut, pour qu'une scène de nuit reste silencieuse.
    - **Format des données d'énergie** : laissez « Standard (BCD) » sauf si la puissance ou l'énergie affichée est absurde.
    - **Clés des climatiseurs récents (V3)** : la **Région du cloud** du compte public qui sert à obtenir les clés (Europe par défaut), ou votre propre compte, dans **Compte NetHome Plus** et **Mot de passe NetHome Plus** (facultatifs).
+   - **Jeton et clé saisis à la main** : facultatif, seulement pour un appareil V3 dont le cloud ne donne pas la clé (voir plus bas).
 4. Ouvrez l'onglet **Découverte** : chaque climatiseur trouvé apparaît, nommé « Climatiseur » suivi des quatre derniers caractères de son nom Wi-Fi. Ajoutez à Gladys ceux que vous voulez.
 
 Le bouton **Rechercher les climatiseurs** (onglet Configuration) relance une recherche et liste chaque climatiseur trouvé, son adresse, son protocole et s'il répond.
@@ -59,6 +62,30 @@ Chaque climatiseur est un appareil Gladys. Ses fonctionnalités dépendent de ce
 | **Puissance consommée**, **Énergie consommée** | Puissance instantanée (W) et énergie totale (kWh), pour les appareils avec compteur d'énergie.   |
 
 Les changements faits avec la télécommande ou l'application sont repris à la lecture suivante.
+
+### Pompes à chaleur
+
+Une pompe à chaleur (type `0xC3`) est un appareil Gladys à part, nommé « Pompe à chaleur » suivi des quatre derniers caractères de son nom Wi-Fi. Ses fonctionnalités suivent l'installation qu'elle annonce (une ou deux zones, eau chaude, chauffage seul ou chauffage et rafraîchissement) :
+
+| Fonctionnalité                                                                              | Ce qu'elle fait                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mode zone 1**, **Mode zone 2**                                                            | Arrêt, Chaud, Froid, Auto : Arrêt coupe la zone, les autres valeurs règlent le mode de fonctionnement de la pompe à chaleur, commun aux deux zones. Zone 2 seulement avec deux zones.                                                                                       |
+| **Consigne zone 1**, **Consigne zone 2**                                                    | La température d'eau de la zone (degrés entiers), ou la température de la pièce pour une zone pilotée par un thermostat d'ambiance (par demi-degré), dans les limites annoncées par l'appareil.                                                                             |
+| **Eau chaude**, **Consigne d'eau chaude**                                                   | Eau chaude sanitaire en marche ou arrêtée, et sa consigne dans les limites de l'appareil.                                                                                                                                                                                   |
+| **Température du ballon**                                                                   | La température mesurée dans le ballon.                                                                                                                                                                                                                                      |
+| **Température extérieure**, **Température d'entrée d'eau**, **Température de sortie d'eau** | Mesurées par les unités extérieure et hydraulique, quand l'appareil les donne.                                                                                                                                                                                              |
+| **Fonctionnement zone 1**, **Fonctionnement zone 2**                                        | Repos, chauffe ou rafraîchissement : ce que fait la zone en ce moment (repos quand elle est arrêtée ou pendant que l'appareil chauffe l'eau chaude).                                                                                                                        |
+| **Loi d'eau zone 1**, **Loi d'eau zone 2**                                                  | La consigne d'eau de la zone suit la température extérieure (la courbe réglée sur la commande).                                                                                                                                                                             |
+| **Chauffe de l'eau chaude**                                                                 | L'appareil chauffe l'eau chaude en ce moment.                                                                                                                                                                                                                               |
+| **Débit d'eau**, **Pression d'eau**                                                         | Débit du circuit de chauffage (m³/h) et sa pression (kPa).                                                                                                                                                                                                                  |
+| **Mode éco**, **Mode silencieux**, **Mode super silencieux**                                | Les préréglages de l'appareil. Le mode super silencieux est le niveau le plus discret du mode silencieux, quand l'appareil le propose.                                                                                                                                      |
+| **Compresseur**, **Dégivrage**, **Appoint électrique**                                      | Le compresseur tourne, l'unité extérieure dégivre, une résistance électrique (appoint ou ballon) aide.                                                                                                                                                                      |
+| **Heures du compresseur**                                                                   | Heures de fonctionnement du compresseur : elles apparaissent dès que l'appareil les a envoyées.                                                                                                                                                                             |
+| **Code erreur**                                                                             | Le code affiché par la commande (E8, P1, H6...), ou « Aucune erreur ». Le déclencheur « Erreur du climatiseur » le donne dans `error_display`.                                                                                                                              |
+| **Puissance consommée**                                                                     | La puissance instantanée (W), quand l'appareil la donne.                                                                                                                                                                                                                    |
+| **Énergie consommée**, **Chaleur produite (kWh)**                                           | L'électricité consommée et la chaleur produite au total (kWh) : elles apparaissent dès que l'appareil a envoyé ses compteurs. Leur rapport donne le rendement saisonnier (COP). La chaleur est un simple compteur, pour que Gladys ne la compte pas comme de l'électricité. |
+
+L'appoint électrique du ballon, l'eau chaude rapide et la désinfection anti-légionellose restent entre les mains de l'appareil et de sa commande. Le widget « Climatiseur » et l'action de scène « Lancer la climatisation » sont réservés aux climatiseurs ; le déclencheur « Erreur du climatiseur » fonctionne aussi pour les pompes à chaleur. La prise en charge des pompes à chaleur a été écrite d'après le code de midea-local et attend des retours sur de vrais appareils.
 
 ## Widget
 
@@ -97,6 +124,7 @@ Pour éteindre le climatiseur, ou changer un seul réglage, utilisez l'action st
 
 - **Aucun climatiseur trouvé** : vérifiez qu'il est connecté dans son application et sur le même réseau que Gladys ; saisissez son adresse IP dans la configuration ; lancez **Rechercher les climatiseurs**.
 - **« Un climatiseur récent (V3) n'a pas de clé »** : Gladys n'a pas pu joindre le cloud Midea, ou le compte public de la région ne connaît pas l'appareil. Essayez une autre **Région du cloud**, ou saisissez votre propre compte NetHome Plus, puis relancez **Rechercher les climatiseurs**.
+- **Le cloud ne donne pas de clé** (certaines pompes à chaleur) : si l'intégration Midea AC LAN de Home Assistant parle déjà à l'appareil, recopiez son jeton et sa clé (dans sa configuration enregistrée) dans **Jeton et clé saisis à la main**, sous la forme `jeton:clé`, puis relancez **Rechercher les climatiseurs**.
 - **Le climatiseur ne répond pas** : vérifiez qu'il est alimenté et que son adresse n'a pas changé ; un module n'accepte qu'une connexion à la fois, fermez les autres outils locaux qui lui parlent.
 - **Puissance ou énergie absurdes** : passez le **Format des données d'énergie** sur « Binaire ».
 - **Plus de détails** : mettez la variable d'environnement `LOG_LEVEL` du conteneur à `debug`.
@@ -104,7 +132,7 @@ Pour éteindre le climatiseur, ou changer un seul réglage, utilisez l'action st
 ## Limites
 
 - Développée sans le matériel : vos retours sont les bienvenus sur [GitHub](https://github.com/guim31/gladys-midea/issues).
-- Climatiseurs seulement : les déshumidificateurs et autres appareils Midea ne sont pas encore pris en charge.
+- Climatiseurs et pompes à chaleur air/eau seulement : les déshumidificateurs et autres appareils Midea ne sont pas encore pris en charge.
 - Les positions des volets, l'afficheur (LED) et les préréglages avancés (breeze, iECO, air frais...) ne sont pas gérés.
 - Les modules de première génération (V1) ne sont pas pris en charge.
 - Gladys affiche la consigne par degré entier sur certains écrans ; l'appareil, lui, accepte les demi-degrés.

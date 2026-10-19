@@ -14,6 +14,8 @@ El criterio es la aplicación, no la marca del equipo: un aire acondicionado (ti
 
 Midea fabrica para muchas marcas; los equipos de marcas afines como Comfee, Carrier o algunas gamas de Toshiba suelen usar estas aplicaciones. Los splits, los equipos de ventana y los portátiles hablan todos el mismo protocolo.
 
+Las **bombas de calor aire-agua** (tipo de aparato Midea `0xC3`, el «Heat Pump Wi-Fi Controller» de una bomba de calor hidráulica, por ejemplo el modelo 171H120F) también son compatibles: zonas de calefacción, agua caliente sanitaria, modos eco y silencioso, temperaturas del agua y exterior. Aparecen en la pestaña Descubrir como los aires acondicionados.
+
 No compatibles: los demás aparatos Midea (deshumidificadores, calentadores de agua...), que la búsqueda indica como «no compatible», y los primeros módulos Wi-Fi (protocolo V1, hacia 2015).
 
 ## Requisitos
@@ -33,6 +35,7 @@ No compatibles: los demás aparatos Midea (deshumidificadores, calentadores de a
    - **Pitido en cada orden**: desactivado por defecto, para que una escena nocturna sea silenciosa.
    - **Formato de los datos de energía**: deje «Estándar (BCD)» salvo si la potencia o la energía mostrada es absurda.
    - **Claves de los equipos recientes (V3)**: la **Región de la nube** de la cuenta pública con la que se obtienen las claves (Europa por defecto), o su propia cuenta, en **Cuenta NetHome Plus** y **Contraseña NetHome Plus** (opcionales).
+   - **Token y clave introducidos a mano**: opcional, solo para un equipo V3 cuya clave no da la nube (véase más abajo).
 4. Abra la pestaña **Descubrir**: cada equipo encontrado aparece con el nombre «Aire acondicionado» seguido de los cuatro últimos caracteres de su nombre Wi-Fi. Añada a Gladys los que desee.
 
 El botón **Buscar aires acondicionados** (pestaña Configuración) inicia una nueva búsqueda y lista cada equipo encontrado, su dirección, su protocolo y si responde.
@@ -59,6 +62,30 @@ Cada aire acondicionado es un dispositivo de Gladys. Sus funciones dependen de l
 | **Potencia consumida**, **Energía consumida**      | Potencia instantánea (W) y energía total (kWh), para los equipos con contador de energía.                  |
 
 Los cambios hechos con el mando o la aplicación se recogen en la lectura siguiente.
+
+### Bombas de calor
+
+Una bomba de calor (tipo `0xC3`) es un dispositivo de Gladys propio, llamado «Bomba de calor» seguido de los cuatro últimos caracteres de su nombre Wi-Fi. Sus funciones siguen la instalación que anuncia (una o dos zonas, agua caliente, solo calefacción o calefacción y refrigeración):
+
+| Función                                                                                         | Qué hace                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Modo zona 1**, **Modo zona 2**                                                                | Apagado, Calor, Frío, Automático: Apagado detiene la zona, los demás valores fijan el modo de funcionamiento de la bomba de calor, común a las dos zonas. Zona 2 solo con dos zonas.                                                                   |
+| **Consigna zona 1**, **Consigna zona 2**                                                        | La temperatura del agua de la zona (grados enteros), o la temperatura de la estancia para una zona con termostato de ambiente (por medios grados), dentro de los límites que anuncia el equipo.                                                        |
+| **Agua caliente**, **Consigna de agua caliente**                                                | Agua caliente sanitaria encendida o apagada, y su consigna dentro de los límites del equipo.                                                                                                                                                           |
+| **Temperatura del depósito**                                                                    | La temperatura medida en el depósito.                                                                                                                                                                                                                  |
+| **Temperatura exterior**, **Temperatura de entrada de agua**, **Temperatura de salida de agua** | Medidas por las unidades exterior e hidráulica, cuando el equipo las da.                                                                                                                                                                               |
+| **Funcionamiento zona 1**, **Funcionamiento zona 2**                                            | Reposo, calefacción o refrigeración: lo que hace la zona en este momento (reposo cuando está apagada o mientras el equipo calienta el agua).                                                                                                           |
+| **Curva climática zona 1**, **Curva climática zona 2**                                          | La consigna del agua de la zona sigue la temperatura exterior (la curva ajustada en el mando).                                                                                                                                                         |
+| **Calentamiento del agua**                                                                      | El equipo está calentando el agua caliente en este momento.                                                                                                                                                                                            |
+| **Caudal de agua**, **Presión del agua**                                                        | Caudal del circuito de calefacción (m³/h) y su presión (kPa).                                                                                                                                                                                          |
+| **Modo eco**, **Modo silencioso**, **Modo súper silencioso**                                    | Los preajustes del equipo. El modo súper silencioso es el nivel más discreto del modo silencioso, cuando el equipo lo ofrece.                                                                                                                          |
+| **Compresor**, **Desescarche**, **Apoyo eléctrico**                                             | Si el compresor funciona, la unidad exterior desescarcha, una resistencia eléctrica (apoyo o depósito) ayuda.                                                                                                                                          |
+| **Horas del compresor**                                                                         | Horas de funcionamiento del compresor: aparecen en cuanto el equipo las ha enviado.                                                                                                                                                                    |
+| **Código de error**                                                                             | El código que muestra el mando (E8, P1, H6...), o «Sin errores». El disparador «Error del equipo» lo da en `error_display`.                                                                                                                            |
+| **Potencia consumida**                                                                          | La potencia instantánea (W), cuando el equipo la da.                                                                                                                                                                                                   |
+| **Energía consumida**, **Calor producido (kWh)**                                                | La electricidad consumida y el calor producido en total (kWh): aparecen en cuanto el equipo ha enviado sus contadores. Su relación da el rendimiento estacional (COP). El calor es un simple contador, para que Gladys no lo cuente como electricidad. |
+
+La resistencia de apoyo del depósito, el agua caliente rápida y la desinfección antilegionela quedan en manos del equipo y de su mando. El widget «Aire acondicionado» y la acción de escena «Poner en marcha el aire» son solo para aires acondicionados; el disparador «Error del equipo» funciona también para las bombas de calor. La compatibilidad con las bombas de calor se escribió a partir del código de midea-local y espera comentarios sobre equipos reales.
 
 ## Widget
 
@@ -97,6 +124,7 @@ Para apagar el equipo, o cambiar un solo ajuste, utilice la acción estándar «
 
 - **No se encuentra ningún equipo**: compruebe que está conectado en su aplicación y en la misma red que Gladys; introduzca su dirección IP en la configuración; ejecute **Buscar aires acondicionados**.
 - **«Un equipo reciente (V3) no tiene clave»**: Gladys no ha podido contactar con la nube de Midea, o la cuenta pública de la región no conoce el equipo. Pruebe otra **Región de la nube**, o introduzca su propia cuenta NetHome Plus, y vuelva a ejecutar **Buscar aires acondicionados**.
+- **La nube no da clave** (algunas bombas de calor): si la integración Midea AC LAN de Home Assistant ya se comunica con el equipo, copie su token y su clave (en su configuración guardada) en **Token y clave introducidos a mano**, con la forma `token:clave`, y vuelva a ejecutar **Buscar aires acondicionados**.
 - **El equipo no responde**: compruebe que tiene corriente y que su dirección no ha cambiado; un módulo solo acepta una conexión a la vez, cierre otras herramientas locales que le hablen.
 - **Valores de potencia o energía absurdos**: cambie el **Formato de los datos de energía** a «Binario».
 - **Más detalles**: ponga la variable de entorno `LOG_LEVEL` del contenedor en `debug`.
@@ -104,7 +132,7 @@ Para apagar el equipo, o cambiar un solo ajuste, utilice la acción estándar «
 ## Limitaciones
 
 - Desarrollada sin el hardware: sus comentarios son bienvenidos en [GitHub](https://github.com/guim31/gladys-midea/issues).
-- Solo aires acondicionados: los deshumidificadores y otros aparatos Midea aún no son compatibles.
+- Solo aires acondicionados y bombas de calor aire-agua: los deshumidificadores y otros aparatos Midea aún no son compatibles.
 - Las posiciones de las lamas, la pantalla (LED) y los preajustes avanzados (breeze, iECO, aire fresco...) no se gestionan.
 - Los módulos de primera generación (V1) no son compatibles.
 - Gladys muestra la consigna en grados enteros en algunas pantallas; el equipo, en cambio, acepta medios grados.

@@ -10,6 +10,31 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Added
+
+- Air-to-water heat pumps (Midea appliance type `0xC3`, "Heat Pump Wi-Fi
+  Controller" such as the 171H120F), ported from midea-local: one Gladys device
+  per heat pump with the mode and setpoint of each heating zone (thermostat),
+  domestic hot water on/off and setpoint (water heater), tank, outdoor, water
+  inlet and outlet temperatures, eco and silent modes, power draw and energy
+  consumed. Setpoints stay within the limits the unit announces; the "Unit
+  error" trigger covers heat pumps too (guim31/gladys-midea#5).
+- Heat pumps, beyond the Home Assistant integration's controls: operating
+  state of each zone, hot water heating, compressor, defrosting and backup
+  electric heater, water flow and pressure, compressor run time, heat
+  produced (for the COP), weather curve of each zone, super silent mode, and
+  the error code as the controller shows it (E8, P1...).
+- Trigger "Unit error": new variable `error_display`, the code the unit
+  shows.
+- Setting "Token and key typed by hand": the token and key of a V3 unit the
+  Midea cloud gives no key for, as Home Assistant's Midea AC LAN keeps them.
+- `scripts/probe.mjs --host` reads a heat pump too, and takes a V3 token and
+  key from `MIDEA_TOKEN` and `MIDEA_KEY`.
+
+### Changed
+
+- The search report counts "Midea units" rather than air conditioners.
+
 ## [1.0.1] - 2026-10-13
 
 ### Added

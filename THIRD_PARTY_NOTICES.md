@@ -3,7 +3,9 @@
 The Midea LAN protocol code in `src/midea/` is a port to JavaScript of parts of the
 two projects below, both under the MIT license, whose notices follow. The
 fixtures in `test/fixtures/msmart-vectors.json` were produced by running
-msmart-ng and include frames from its test suite.
+msmart-ng and include frames from its test suite. The heat pump (0xC3) frames
+in `src/midea/c3.js` are ported from midea-local, and
+`test/fixtures/midea-local-c3-vectors.json` was produced by running it.
 
 ## msmart-ng (https://github.com/mill1000/midea-msmart)
 
@@ -39,6 +41,7 @@ SOFTWARE.
 ````text
 MIT License
 
+Copyright (c) 2026 Wentao Wu
 Copyright (c) 2021 George Zhao
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

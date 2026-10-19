@@ -3,10 +3,10 @@
   "type": "device",
   "name": "Midea",
   "description": {
-    "en": "Midea air conditioners and their rebrands on the local network: mode, setpoint, fan, energy.",
-    "fr": "Climatiseurs Midea et marques dérivées en réseau local : mode, consigne, ventilation, énergie.",
-    "de": "Midea-Klimaanlagen und baugleiche Marken im lokalen Netzwerk: Modus, Sollwert, Lüfter, Energie.",
-    "es": "Aires acondicionados Midea y marcas derivadas en la red local: modo, consigna, ventilador, energía."
+    "en": "Midea air conditioners, heat pumps and their rebrands on the local network: mode, setpoint, energy.",
+    "fr": "Climatiseurs, pompes à chaleur Midea et marques dérivées en réseau local : mode, consigne, énergie.",
+    "de": "Midea-Klimaanlagen, Wärmepumpen und baugleiche Marken im lokalen Netz: Modus, Sollwert, Energie.",
+    "es": "Aires acondicionados, bombas de calor Midea y marcas afines en red local: modo, consigna, energía."
   },
   "version": "1.0.1",
   "docker_image": "ghcr.io/guim31/gladys-midea:1.0.1",
@@ -282,6 +282,23 @@
         "es": "Contraseña NetHome Plus (opcional)"
       },
       "required": false
+    },
+    {
+      "key": "v3_keys",
+      "type": "secret",
+      "label": {
+        "en": "Token and key typed by hand (optional)",
+        "fr": "Jeton et clé saisis à la main (facultatif)",
+        "de": "Token und Schlüssel von Hand (optional)",
+        "es": "Token y clave introducidos a mano (opcional)"
+      },
+      "description": {
+        "en": "Only if the cloud gives no key: token:key of a unit (128 and 64 hexadecimal characters), as Home Assistant's Midea AC LAN keeps them. Several pairs separated by commas.",
+        "fr": "Seulement si le cloud ne donne pas de clé : jeton:clé d'un appareil (128 et 64 caractères hexadécimaux), tels que les garde Midea AC LAN de Home Assistant. Plusieurs paires séparées par des virgules.",
+        "de": "Nur wenn die Cloud keinen Schlüssel liefert: token:schlüssel eines Geräts (128 und 64 Hexadezimalzeichen), wie Midea AC LAN von Home Assistant sie speichert. Mehrere Paare durch Kommas getrennt.",
+        "es": "Solo si la nube no da clave: token:clave de un equipo (128 y 64 caracteres hexadecimales), tal como los guarda Midea AC LAN de Home Assistant. Varios pares separados por comas."
+      },
+      "required": false
     }
   ],
   "actions": [
@@ -334,10 +351,10 @@
         "es": "Error del equipo"
       },
       "description": {
-        "en": "The air conditioner reports a new error code.",
-        "fr": "Le climatiseur signale un nouveau code erreur.",
-        "de": "Die Klimaanlage meldet einen neuen Fehlercode.",
-        "es": "El aire acondicionado indica un nuevo código de error."
+        "en": "The air conditioner or heat pump reports a new error code.",
+        "fr": "Le climatiseur ou la pompe à chaleur signale un nouveau code erreur.",
+        "de": "Die Klimaanlage oder Wärmepumpe meldet einen neuen Fehlercode.",
+        "es": "El aire acondicionado o la bomba de calor indica un nuevo código de error."
       },
       "fields": [
         {
@@ -361,6 +378,16 @@
             "fr": "Code erreur",
             "de": "Fehlercode",
             "es": "Código de error"
+          }
+        },
+        {
+          "key": "error_display",
+          "type": "string",
+          "label": {
+            "en": "Code shown by the unit",
+            "fr": "Code affiché par l'appareil",
+            "de": "Vom Gerät angezeigter Code",
+            "es": "Código mostrado por el equipo"
           }
         }
       ]

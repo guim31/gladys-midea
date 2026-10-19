@@ -241,6 +241,7 @@ export class FakeMidea {
   connect(socket) {
     this.connections += 1;
     const session = { codec: this.version === 3 ? new V3Codec() : null, buffer: Buffer.alloc(0) };
+    this.latest = { session, socket };
     socket.onWrite = (data) => {
       session.buffer = Buffer.concat([session.buffer, data]);
       for (;;) {
@@ -278,13 +279,17 @@ export class FakeMidea {
     }
     const frame = decodePacket(v2);
     for (const answer of this.answer(frame)) {
-      const reply = encodePacket(this.id, answer);
-      socket.push(
-        this.version === 3
-          ? session.codec.encrypt(reply, undefined, V3_TYPE.ENCRYPTED_RESPONSE)
-          : reply,
-      );
+      this.send(session, socket, answer);
     }
+  }
+
+  send(session, socket, frame) {
+    const reply = encodePacket(this.id, frame);
+    socket.push(
+      this.version === 3
+        ? session.codec.encrypt(reply, undefined, V3_TYPE.ENCRYPTED_RESPONSE)
+        : reply,
+    );
   }
 }
 
@@ -380,4 +385,230 @@ export function createFakeCloud(units, { reachable = true } = {}) {
       return unit.credentials;
     },
   };
+}
+
+// --- Heat pumps (appliance 0xC3) -------------------------------------------------
+
+const DEFAULT_HEAT_PUMP = {
+  zone1Power: true,
+  zone2Power: false,
+  dhwPower: false,
+  zone1Curve: false,
+  zone2Curve: false,
+  tbh: false,
+  fastDhw: false,
+  heat: true,
+  cool: false,
+  dhw: true,
+  doubleZone: false,
+  zoneWaterTemperature: [true, false],
+  silent: false,
+  silentLevel: 0,
+  eco: false,
+  mode: 3,
+  modeAuto: 3,
+  zoneTargets: [50, 25],
+  dhwTarget: 50,
+  roomTarget: 22,
+  zoneHeating: [
+    { min: 25, max: 60 },
+    { min: 25, max: 55 },
+  ],
+  zoneCooling: [
+    { min: 18, max: 25 },
+    { min: 18, max: 25 },
+  ],
+  room: { min: 17, max: 30 },
+  dhwRange: { min: 20, max: 60 },
+  tankTemperature: 25,
+  errorCode: 0,
+};
+
+/** A C3 frame (midea-local layout: no message id, no CRC-8). */
+export function c3Frame(messageType, body, protocol = 2) {
+  const header = Buffer.from([0xaa, 10 + body.length, 0xc3, 0, 0, 0, 0, 0, protocol, messageType]);
+  const frame = Buffer.concat([header, Buffer.from(body)]);
+  let sum = 0;
+  for (const byte of frame.subarray(1)) sum += byte;
+  return Buffer.concat([frame, Buffer.from([(~sum + 1) & 0xff])]);
+}
+
+/** The basic body (type 0x01) of a heat pump with this state. */
+export function basicBody(state) {
+  const flag = (value, mask) => (value ? mask : 0);
+  return [
+    0x01,
+    flag(state.zone1Power, 0x01) |
+      flag(state.zone2Power, 0x02) |
+      flag(state.dhwPower, 0x04) |
+      flag(state.zone1Curve, 0x08) |
+      flag(state.zone2Curve, 0x10) |
+      flag(state.tbh, 0x20) |
+      flag(state.fastDhw, 0x40),
+    flag(state.heat, 0x01) |
+      flag(state.cool, 0x02) |
+      flag(state.dhw, 0x04) |
+      flag(state.doubleZone, 0x08) |
+      flag(state.zoneWaterTemperature[0], 0x10) |
+      flag(state.zoneWaterTemperature[1], 0x20),
+    flag(state.silent, 0x02) | flag(state.eco, 0x08),
+    state.mode,
+    state.modeAuto,
+    state.zoneTargets[0],
+    state.zoneTargets[1],
+    state.dhwTarget,
+    state.roomTarget * 2,
+    state.zoneHeating[0].max,
+    state.zoneHeating[0].min,
+    state.zoneCooling[0].max,
+    state.zoneCooling[0].min,
+    state.zoneHeating[1].max,
+    state.zoneHeating[1].min,
+    state.zoneCooling[1].max,
+    state.zoneCooling[1].min,
+    state.room.max * 2,
+    state.room.min * 2,
+    state.dhwRange.max,
+    state.dhwRange.min,
+    state.tankTemperature,
+    state.errorCode,
+    0x00,
+  ];
+}
+
+/** The unit parameters body (type 0x10). */
+export function unitBody({
+  outdoor,
+  waterIn,
+  waterOut,
+  watts,
+  compressor = 40,
+  run = 0x10,
+  defrost = false,
+  backup = false,
+  flow = 152,
+  pressure = 180,
+}) {
+  const body = new Array(1 + 190).fill(0);
+  body[0] = 0x10;
+  body[1 + 0] = compressor;
+  body[1 + 7] = outdoor & 0xff;
+  body[1 + 9] = waterIn;
+  body[1 + 10] = waterOut;
+  body[1 + 30] = run;
+  body[1 + 31] = defrost ? 0x80 : 0;
+  body[1 + 32] = backup ? 0x01 : 0;
+  body[1 + 54] = flow >> 8;
+  body[1 + 55] = flow & 0xff;
+  body[1 + 61] = pressure >> 8;
+  body[1 + 62] = pressure & 0xff;
+  body[1 + 82] = watts >> 8;
+  body[1 + 83] = watts & 0xff;
+  return body;
+}
+
+/** The unit parameters notification body (notify1, type 0x05). */
+export function unitNotificationBody({ outdoor, waterIn, waterOut, watts, runTime }) {
+  const body = new Array(1 + 70).fill(0);
+  body[0] = 0x05;
+  body[1 + 0] = 40;
+  body[1 + 3] = outdoor & 0xff;
+  body[1 + 5] = waterIn;
+  body[1 + 6] = waterOut;
+  body[1 + 48] = watts >> 8;
+  body[1 + 49] = watts & 0xff;
+  body[1 + 56] = runTime >> 8;
+  body[1 + 57] = runTime & 0xff;
+  return body;
+}
+
+/** The silence answer body (type 0x05): level 1 or 3 as bits 0 and 3. */
+export const silenceBody = (level) => [
+  0x05,
+  level === 0 ? 0 : level === 3 ? 0x09 : 0x01,
+  ...new Array(9).fill(0),
+];
+
+/** The energy notification body (type 0x04). */
+export function energyBody(totalKwh, producedKwh = 0) {
+  const u32 = (n) => [(n >>> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+  return [0x04, 0x01, ...u32(totalKwh), ...u32(producedKwh), 5, 50, 25, 50, 22];
+}
+
+export class FakeHeatPump extends FakeMidea {
+  /**
+   * @param {object} options FakeMidea options, and:
+   * @param {object} [options.state] DEFAULT_HEAT_PUMP overrides
+   * @param {boolean} [options.unitAnswers] answers the unit parameters query
+   * @param {boolean} [options.applianceAnswers] answers the appliance query
+   * @param {boolean} [options.setAnswers] answers the set commands
+   * @param {boolean} [options.silenceAnswers] answers the silence query
+   */
+  constructor({
+    state = {},
+    unitAnswers = true,
+    applianceAnswers = true,
+    setAnswers = true,
+    silenceAnswers = true,
+    ...options
+  } = {}) {
+    super({ ...options, type: 0xc3, caps: null });
+    this.state = structuredClone({ ...DEFAULT_HEAT_PUMP, ...state });
+    this.sensors = { outdoor: 6, waterIn: 30, waterOut: 35, watts: 1200 };
+    this.unitAnswers = unitAnswers;
+    this.applianceAnswers = applianceAnswers;
+    this.setAnswers = setAnswers;
+    this.silenceAnswers = silenceAnswers;
+    this.frames = [];
+  }
+
+  /** Push a frame without request on the open session, as the unit does between the reads. */
+  push(frame) {
+    this.send(this.latest.session, this.latest.socket, frame);
+  }
+
+  answer(frame) {
+    this.frames.push(frame);
+    const type = frame[9];
+    const body = frame.subarray(10, frame.length - 1);
+    if (type === 0xa0) {
+      return this.applianceAnswers ? [c3Frame(0xa0, new Array(19).fill(0), 2)] : [];
+    }
+    if (type === 0x03 && body[0] === 0x01) {
+      return [c3Frame(0x03, basicBody(this.state))];
+    }
+    if (type === 0x03 && body[0] === 0x10) {
+      return this.unitAnswers ? [c3Frame(0x03, unitBody(this.sensors))] : [];
+    }
+    if (type === 0x03 && body[0] === 0x05) {
+      return this.silenceAnswers ? [c3Frame(0x03, silenceBody(this.state.silentLevel))] : [];
+    }
+    if (type === 0x02 && body[0] === 0x01) {
+      const powers = body[1];
+      Object.assign(this.state, {
+        zone1Power: Boolean(powers & 1),
+        zone2Power: Boolean(powers & 2),
+        dhwPower: Boolean(powers & 4),
+        mode: body[2],
+        zoneTargets: [body[3], body[4]],
+        dhwTarget: body[5],
+        roomTarget: body[6] / 2,
+        zone1Curve: Boolean(body[7] & 1),
+        zone2Curve: Boolean(body[7] & 2),
+        tbh: Boolean(body[7] & 4),
+        fastDhw: Boolean(body[7] & 8),
+      });
+      return this.setAnswers ? [c3Frame(0x02, basicBody(this.state))] : [];
+    }
+    if (type === 0x02 && body[0] === 0x07) {
+      this.state.eco = Boolean(body[1] & 1);
+      return this.setAnswers ? [c3Frame(0x02, [0x07, body[1], 0, 0, 0, 0, 0])] : [];
+    }
+    if (type === 0x02 && body[0] === 0x05) {
+      this.state.silent = body[1] !== 0;
+      this.state.silentLevel = body[1];
+      return this.setAnswers ? [c3Frame(0x02, [0x05, body[1], 0, 0, 0, 0, 0, 0, 0, 0])] : [];
+    }
+    return [];
+  }
 }

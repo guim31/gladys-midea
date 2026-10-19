@@ -52,6 +52,7 @@ export class MideaLan {
    * @param {Function} [options.connect] net.connect (tests)
    * @param {object} [options.timings] LAN_TIMINGS overrides
    * @param {object} [options.logger]
+   * @param {(frame: Buffer) => void} [options.onUnsolicited] frames no request waits for
    */
   constructor({
     host,
@@ -62,6 +63,7 @@ export class MideaLan {
     connect,
     timings,
     logger,
+    onUnsolicited,
   }) {
     this.host = host;
     this.port = port;
@@ -71,6 +73,7 @@ export class MideaLan {
     this.connectImpl = connect ?? tcpConnect;
     this.timings = { ...LAN_TIMINGS, ...timings };
     this.logger = logger;
+    this.onUnsolicited = onUnsolicited;
     this.socket = null;
     this.codec = null;
     this.authenticatedAt = 0;
@@ -108,15 +111,18 @@ export class MideaLan {
    * takes (every frame by default). Serialized with the other requests.
    * @param {Buffer} frame
    * @param {(frame: Buffer) => boolean} [accept]
-   * @returns {Promise<Buffer>}
+   * @param {object} [options]
+   * @param {boolean} [options.optional] no answer resolves null, the session stays
+   * @param {number} [options.retries] sendings before giving up
+   * @returns {Promise<Buffer|null>}
    */
-  request(frame, accept = () => true) {
-    const run = this.queue.then(() => this.exchange(frame, accept));
+  request(frame, accept = () => true, options = {}) {
+    const run = this.queue.then(() => this.exchange(frame, accept, options));
     this.queue = run.catch(() => {});
     return run;
   }
 
-  async exchange(frame, accept) {
+  async exchange(frame, accept, { optional = false, retries = this.timings.retries } = {}) {
     await this.ensureSession();
     const packet = encodePacket(this.deviceId, frame);
     const wire = this.version === 3 ? this.codec.encrypt(packet) : packet;
@@ -126,9 +132,13 @@ export class MideaLan {
       try {
         return (await answer).frame;
       } catch (err) {
-        if (err.timeout && attempt < this.timings.retries && this.socket) {
+        if (err.timeout && attempt < retries && this.socket) {
           this.logger?.debug(`${this.host}: no answer, sending again`);
           continue;
+        }
+        if (err.timeout && optional && this.socket) {
+          // A query some units ignore: not a reason to drop the session.
+          return null;
         }
         this.close();
         throw err.timeout
@@ -238,6 +248,10 @@ export class MideaLan {
   deliver(item) {
     const waiter = this.waiters.find((candidate) => candidate.match(item));
     if (!waiter) {
+      if (item.frame && this.onUnsolicited) {
+        this.onUnsolicited(item.frame);
+        return;
+      }
       this.logger?.debug(
         `${this.host}: unsolicited ${item.frame ? item.frame.toString('hex') : 'packet'}`,
       );

@@ -12,6 +12,7 @@ test('defaults: French names, 30 s, public European account, no beep', () => {
     invalidHosts: [],
     pollSeconds: 30,
     cloud: { region: 'DE', account: '', password: '' },
+    manualKeys: [],
     energyFormat: 'bcd',
     beep: false,
     language: 'fr',

@@ -19,6 +19,7 @@ export const DEFAULT_CONFIG = {
   cloud_region: 'DE',
   cloud_account: '',
   cloud_password: '',
+  v3_keys: '',
   energy_format: 'bcd',
   beep: false,
   language: 'fr',
@@ -54,6 +55,30 @@ export function parseHosts(raw) {
   return { hosts, invalid };
 }
 
+const TOKEN = /^[0-9a-f]{128}$/;
+const KEY = /^[0-9a-f]{64}$/;
+const MAX_KEYS = 16;
+
+/**
+ * Parse the V3 token and key pairs typed by hand ("token:key", separated by
+ * commas, semicolons, spaces or new lines), for a unit the cloud gives no key.
+ * @param {unknown} raw
+ * @returns {{ token: string, key: string }[]}
+ */
+export function parseManualKeys(raw) {
+  const pairs = [];
+  const entries = typeof raw === 'string' ? raw.split(/[\s,;]+/) : [];
+  for (const entry of entries) {
+    const [token, key, extra] = entry.trim().toLowerCase().split(':');
+    if (extra === undefined && TOKEN.test(token ?? '') && KEY.test(key ?? '')) {
+      if (!pairs.some((pair) => pair.token === token) && pairs.length < MAX_KEYS) {
+        pairs.push({ token, key });
+      }
+    }
+  }
+  return pairs;
+}
+
 const text = (value) => (typeof value === 'string' ? value.trim() : '');
 
 /**
@@ -81,6 +106,7 @@ export function normalizeConfig(raw = {}) {
       account: account && password ? account : '',
       password: account && password ? password : '',
     },
+    manualKeys: parseManualKeys(source.v3_keys),
     energyFormat: ENERGY_FORMATS.includes(source.energy_format)
       ? source.energy_format
       : DEFAULT_CONFIG.energy_format,

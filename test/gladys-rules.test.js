@@ -147,6 +147,12 @@ test('the published states fit the features they target', async () => {
     for (const state of world.fake.states) {
       const feature = features.get(state.device_feature_external_id);
       assert.ok(feature, `state for an unknown feature ${state.device_feature_external_id}`);
+      if (feature.category === 'text') {
+        // A text state carries `text`, never empty, and no number.
+        assert.ok(typeof state.text === 'string' && state.text.trim(), `${feature.name}: text`);
+        assert.equal(state.state, undefined);
+        continue;
+      }
       assert.equal(typeof state.state, 'number');
       assert.ok(
         state.state >= feature.min && state.state <= feature.max,

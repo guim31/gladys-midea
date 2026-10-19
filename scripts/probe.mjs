@@ -11,6 +11,12 @@
 //   node scripts/probe.mjs --host 192.168.1.60 [--region DE]
 //       Sends the discovery request to the unit, then reads (never writes) its
 //       capabilities and state; a V3 unit gets its key from the cloud first.
+//       An air conditioner (0xAC) and a heat pump (0xC3) are both read.
+//
+//   MIDEA_TOKEN=… MIDEA_KEY=… node scripts/probe.mjs --host 192.168.1.61
+//       A V3 unit with the token and key known elsewhere (e.g. Home
+//       Assistant's Midea AC LAN), without the cloud. Environment variables,
+//       not options, to keep them out of the shell history.
 //
 // Nothing sensitive is printed: no password, token, key, full serial or id.
 // -----------------------------------------------------------------------------
@@ -23,6 +29,15 @@ import {
   getStateCommand,
   summarizeCapabilities,
 } from '../src/midea/ac.js';
+import {
+  BODY_TYPE,
+  answersBody,
+  decodeC3Response,
+  getApplianceCommand,
+  getQueryCommand,
+  isApplianceAnswer,
+} from '../src/midea/c3.js';
+import { APPLIANCE } from '../src/midea/frame.js';
 import { MideaLan } from '../src/midea/lan.js';
 import { udpId } from '../src/midea/security.js';
 import { probeHost } from '../src/midea/udp.js';
@@ -62,8 +77,22 @@ async function probeUnit(host) {
     `${host}: type 0x${info.type.toString(16)}, protocol V${info.version}, port ${info.port}, ` +
       `ssid ${info.ssid}, model ${info.model || '?'}, serial ${mask(info.serial)}, id ${mask(String(info.deviceId))}`,
   );
+  const heatPump = info.type === APPLIANCE.HEAT_PUMP;
+  if (!heatPump && info.type !== APPLIANCE.AIR_CONDITIONER) {
+    say('not an air conditioner nor a heat pump: not supported');
+    return;
+  }
+  // The read that proves a session works, by kind of unit.
+  const check = (lan) =>
+    heatPump
+      ? lan.request(getQueryCommand(BODY_TYPE.BASIC), answersBody(BODY_TYPE.BASIC))
+      : lan.request(getStateCommand(), (frame) => frame[10] === 0xc0);
   let credentials = null;
-  if (info.version === 3) {
+  const { MIDEA_TOKEN: token, MIDEA_KEY: key } = process.env;
+  if (info.version === 3 && token && key) {
+    credentials = { token: token.toLowerCase(), key: key.toLowerCase() };
+    say('keys: taken from MIDEA_TOKEN and MIDEA_KEY');
+  } else if (info.version === 3) {
     const cloud = new NetHomePlusCloud({ region: values.region });
     for (const endian of ['little', 'big']) {
       try {
@@ -71,7 +100,7 @@ async function probeUnit(host) {
         say(`cloud: key found (${endian} udpid)`);
         const lan = new MideaLan({ ...info, credentials });
         try {
-          await lan.request(getStateCommand(), (frame) => frame[10] === 0xc0);
+          await check(lan);
           lan.close();
           break;
         } catch (err) {
@@ -86,6 +115,14 @@ async function probeUnit(host) {
     if (!credentials) return;
   }
   const lan = new MideaLan({ ...info, credentials });
+  if (heatPump) {
+    try {
+      await probeHeatPump(lan);
+    } finally {
+      lan.close();
+    }
+    return;
+  }
   try {
     let raw = null;
     try {
@@ -103,6 +140,33 @@ async function probeUnit(host) {
   } finally {
     lan.close();
   }
+}
+
+/** A heat pump: appliance answer, basic state, unit parameters (all queries). */
+async function probeHeatPump(lan) {
+  const optional = { optional: true, retries: 1 };
+  const appliance = await lan.request(getApplianceCommand(), isApplianceAnswer, optional);
+  const protocol = appliance ? decodeC3Response(appliance).protocol : 0;
+  say(`appliance: ${appliance ? `message protocol ${protocol}` : 'no answer, protocol 0'}`);
+  const basic = decodeC3Response(
+    await lan.request(getQueryCommand(BODY_TYPE.BASIC, { protocol }), answersBody(BODY_TYPE.BASIC)),
+  );
+  say(`state: ${JSON.stringify(basic.state)}`);
+  const unit = await lan.request(
+    getQueryCommand(BODY_TYPE.UNIT, { protocol }),
+    answersBody(BODY_TYPE.UNIT),
+    optional,
+  );
+  // The two 32-bit counters (totalElectricity, totalThermal) have no unit
+  // midea-local vouches for: compare them with the energy consumed shown
+  // by the unit's own controller or app.
+  say(`unit parameters: ${unit ? JSON.stringify(decodeC3Response(unit).unit) : 'no answer'}`);
+  const silence = await lan.request(
+    getQueryCommand(BODY_TYPE.SILENCE, { protocol }),
+    answersBody(BODY_TYPE.SILENCE),
+    optional,
+  );
+  say(`silent level: ${silence ? decodeC3Response(silence).silentLevel : 'no answer'}`);
 }
 
 try {

@@ -1,6 +1,7 @@
 // -----------------------------------------------------------------------------
 // Texts the integration sends to Gladys outside the widget (src/widgets.js):
-// connection status and the "Search for air conditioners" report. Four
+// connection status and the "Search for air conditioners" report (air
+// conditioners and heat pumps alike). Four
 // languages, the four of the Gladys interface; German says "du", Spanish
 // "usted". test/i18n.test.js checks every table.
 // -----------------------------------------------------------------------------
@@ -40,7 +41,7 @@ const MAX_LISTED = 8;
 export const SEARCH_TEXT = {
   en: {
     none: 'No Midea air conditioner found.',
-    count: (total, reachable) => `${total} air conditioner(s), ${reachable} answering:`,
+    count: (total, reachable) => `${total} Midea unit(s), ${reachable} answering:`,
     answering: 'answers',
     unreachable: 'not answering',
     noKeys: 'no key from the Midea cloud',
@@ -53,7 +54,7 @@ export const SEARCH_TEXT = {
   },
   fr: {
     none: 'Aucun climatiseur Midea trouvé.',
-    count: (total, reachable) => `${total} climatiseur(s), ${reachable} répondent :`,
+    count: (total, reachable) => `${total} appareil(s) Midea, ${reachable} répondent :`,
     answering: 'répond',
     unreachable: 'ne répond pas',
     noKeys: 'pas de clé du cloud Midea',
@@ -66,7 +67,7 @@ export const SEARCH_TEXT = {
   },
   de: {
     none: 'Keine Midea-Klimaanlage gefunden.',
-    count: (total, reachable) => `${total} Klimaanlage(n), davon ${reachable} erreichbar:`,
+    count: (total, reachable) => `${total} Midea-Gerät(e), davon ${reachable} erreichbar:`,
     answering: 'antwortet',
     unreachable: 'antwortet nicht',
     noKeys: 'kein Schlüssel aus der Midea-Cloud',
@@ -79,7 +80,7 @@ export const SEARCH_TEXT = {
   },
   es: {
     none: 'No se ha encontrado ningún aire acondicionado Midea.',
-    count: (total, reachable) => `${total} aire(s) acondicionado(s), ${reachable} responde(n):`,
+    count: (total, reachable) => `${total} equipo(s) Midea, ${reachable} responde(n):`,
     answering: 'responde',
     unreachable: 'no responde',
     noKeys: 'sin clave de la nube de Midea',

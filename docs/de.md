@@ -14,6 +14,8 @@ Entscheidend ist die App, nicht die Marke auf dem Gerät: Eine Klimaanlage (Mide
 
 Midea baut für viele Marken; Geräte verwandter Marken wie Comfee, Carrier oder mancher Toshiba-Serien nutzen oft diese Apps. Split-, Fenster- und mobile Geräte sprechen alle dasselbe Protokoll.
 
+**Luft-Wasser-Wärmepumpen** (Midea-Gerätetyp `0xC3`, der „Heat Pump Wi-Fi Controller“ einer hydraulischen Wärmepumpe, z. B. Modell 171H120F) werden ebenfalls unterstützt: Heizzonen, Warmwasser, Eco- und leiser Modus, Wasser- und Außentemperaturen. Im Tab „Entdecken“ erscheinen sie wie die Klimaanlagen.
+
 Nicht unterstützt: andere Midea-Geräte (Luftentfeuchter, Warmwasserbereiter...), die die Suche als „nicht unterstützt“ meldet, und die allerersten WLAN-Module (Protokoll V1, um 2015).
 
 ## Voraussetzungen
@@ -33,6 +35,7 @@ Nicht unterstützt: andere Midea-Geräte (Luftentfeuchter, Warmwasserbereiter...
    - **Piepton bei jedem Befehl**: standardmäßig aus, damit eine Szene in der Nacht still bleibt.
    - **Format der Energiedaten**: Lass „Standard (BCD)“, außer die angezeigte Leistung oder Energie ist unsinnig.
    - **Schlüssel neuerer Geräte (V3)**: die **Cloud-Region** des öffentlichen Kontos, mit dem die Schlüssel geholt werden (standardmäßig Europa), oder dein eigenes Konto, in **NetHome-Plus-Konto** und **NetHome-Plus-Passwort** (beide optional).
+   - **Token und Schlüssel von Hand**: optional, nur für ein V3-Gerät, für das die Cloud keinen Schlüssel liefert (siehe unten).
 4. Öffne den Tab **Entdecken**: Jedes gefundene Gerät erscheint als „Klimaanlage“, gefolgt von den letzten vier Zeichen seines WLAN-Namens. Füge die gewünschten zu Gladys hinzu.
 
 Die Schaltfläche **Klimaanlagen suchen** (Tab Konfiguration) startet eine neue Suche und listet jedes gefundene Gerät mit Adresse, Protokoll und ob es antwortet.
@@ -59,6 +62,30 @@ Jede Klimaanlage ist ein Gladys-Gerät. Welche Funktionen es hat, hängt davon a
 | **Leistungsaufnahme**, **Verbrauchte Energie**       | Momentanleistung (W) und Gesamtenergie (kWh), für Geräte mit Energiezähler.                       |
 
 Änderungen per Fernbedienung oder App werden beim nächsten Lesen übernommen.
+
+### Wärmepumpen
+
+Eine Wärmepumpe (Typ `0xC3`) ist ein eigenes Gladys-Gerät, benannt „Wärmepumpe“, gefolgt von den letzten vier Zeichen ihres WLAN-Namens. Die Funktionen folgen der Anlage, die sie meldet (eine oder zwei Zonen, Warmwasser, nur Heizen oder Heizen und Kühlen):
+
+| Funktion                                                                          | Was sie tut                                                                                                                                                                                                                           |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Modus Zone 1**, **Modus Zone 2**                                                | Aus, Heizen, Kühlen, Automatisch: Aus stoppt die Zone, die anderen Werte stellen den Betriebsmodus der Wärmepumpe ein, der für beide Zonen gilt. Zone 2 nur bei zwei Zonen.                                                           |
+| **Sollwert Zone 1**, **Sollwert Zone 2**                                          | Die Wassertemperatur der Zone (ganze Grad) oder die Raumtemperatur bei einer Zone mit Raumthermostat (in halben Grad), innerhalb der Grenzen, die das Gerät meldet.                                                                   |
+| **Warmwasser**, **Warmwasser-Sollwert**                                           | Warmwasser ein oder aus und sein Sollwert innerhalb der Grenzen des Geräts.                                                                                                                                                           |
+| **Speichertemperatur**                                                            | Die im Speicher gemessene Temperatur.                                                                                                                                                                                                 |
+| **Außentemperatur**, **Wassereintrittstemperatur**, **Wasseraustrittstemperatur** | Von Außen- und Hydraulikeinheit gemessen, wenn das Gerät sie liefert.                                                                                                                                                                 |
+| **Betrieb Zone 1**, **Betrieb Zone 2**                                            | Ruhe, Heizen oder Kühlen: was die Zone gerade tut (Ruhe, wenn sie aus ist oder das Gerät Warmwasser bereitet).                                                                                                                        |
+| **Heizkurve Zone 1**, **Heizkurve Zone 2**                                        | Der Wasser-Sollwert der Zone folgt der Außentemperatur (die an der Steuerung eingestellte Kurve).                                                                                                                                     |
+| **Warmwasserbereitung**                                                           | Das Gerät heizt gerade das Warmwasser.                                                                                                                                                                                                |
+| **Wasserdurchfluss**, **Wasserdruck**                                             | Durchfluss des Heizkreises (m³/h) und sein Druck (kPa).                                                                                                                                                                               |
+| **Eco-Modus**, **Leiser Modus**, **Extra leiser Modus**                           | Die Voreinstellungen des Geräts. Der extra leise Modus ist die leiseste Stufe des leisen Modus, wenn das Gerät sie anbietet.                                                                                                          |
+| **Verdichter**, **Abtauen**, **Elektrischer Zuheizer**                            | Ob der Verdichter läuft, die Außeneinheit abtaut, ein Heizstab (Zusatz oder Speicher) hilft.                                                                                                                                          |
+| **Verdichter-Betriebsstunden**                                                    | Betriebsstunden des Verdichters, sobald das Gerät sie gesendet hat.                                                                                                                                                                   |
+| **Fehlercode**                                                                    | Der Code, den die Steuerung anzeigt (E8, P1, H6...), oder „Kein Fehler“. Der Auslöser „Gerätefehler“ liefert ihn als `error_display`.                                                                                                 |
+| **Leistungsaufnahme**                                                             | Die momentane Leistung (W), wenn das Gerät sie liefert.                                                                                                                                                                               |
+| **Verbrauchte Energie**, **Erzeugte Wärme (kWh)**                                 | Insgesamt verbrauchter Strom und erzeugte Wärme (kWh), sobald das Gerät seine Zähler gesendet hat. Das Verhältnis beider ist die Jahresarbeitszahl (COP). Die Wärme ist ein einfacher Zähler, damit Gladys sie nicht als Strom zählt. |
+
+Der Zusatzheizstab des Speichers, das schnelle Warmwasser und die Legionellen-Desinfektion bleiben dem Gerät und seiner Steuerung überlassen. Das Widget „Klimaanlage“ und die Szenenaktion „Klimaanlage starten“ sind nur für Klimaanlagen; der Auslöser „Gerätefehler“ funktioniert auch für Wärmepumpen. Die Unterstützung der Wärmepumpen wurde nach dem Code von midea-local geschrieben und wartet auf Rückmeldungen von echten Geräten.
 
 ## Widget
 
@@ -97,6 +124,7 @@ Zum Ausschalten oder um eine einzelne Einstellung zu ändern, nutze die Standard
 
 - **Kein Gerät gefunden**: Prüfe, ob es in seiner App verbunden und im selben Netzwerk wie Gladys ist; gib seine IP-Adresse in der Konfiguration ein; starte **Klimaanlagen suchen**.
 - **„Ein neueres Gerät (V3) hat keinen Schlüssel“**: Gladys konnte die Midea-Cloud nicht erreichen, oder das öffentliche Konto der Region kennt das Gerät nicht. Probiere eine andere **Cloud-Region** oder gib dein eigenes NetHome-Plus-Konto ein, dann starte **Klimaanlagen suchen** erneut.
+- **Die Cloud liefert keinen Schlüssel** (manche Wärmepumpen): Wenn die Home-Assistant-Integration Midea AC LAN schon mit dem Gerät spricht, kopiere ihren Token und Schlüssel (aus ihrer gespeicherten Konfiguration) in **Token und Schlüssel von Hand**, als `token:schlüssel`, dann starte **Klimaanlagen suchen** erneut.
 - **Das Gerät antwortet nicht**: Prüfe, ob es Strom hat und ob sich seine Adresse nicht geändert hat; ein Modul nimmt nur eine Verbindung gleichzeitig an, schließe also andere lokale Werkzeuge, die mit ihm sprechen.
 - **Unsinnige Leistungs- oder Energiewerte**: Stelle das **Format der Energiedaten** auf „Binär“.
 - **Mehr Details**: Setze die Umgebungsvariable `LOG_LEVEL` des Containers auf `debug`.
@@ -104,7 +132,7 @@ Zum Ausschalten oder um eine einzelne Einstellung zu ändern, nutze die Standard
 ## Grenzen
 
 - Ohne die Hardware entwickelt: Rückmeldungen sind auf [GitHub](https://github.com/guim31/gladys-midea/issues) willkommen.
-- Nur Klimaanlagen: Luftentfeuchter und andere Midea-Geräte werden noch nicht unterstützt.
+- Nur Klimaanlagen und Luft-Wasser-Wärmepumpen: Luftentfeuchter und andere Midea-Geräte werden noch nicht unterstützt.
 - Lamellenpositionen, die Anzeige (LED) und erweiterte Voreinstellungen (Breeze, iECO, Frischluft...) werden nicht unterstützt.
 - Die Module der ersten Generation (V1) werden nicht unterstützt.
 - Gladys zeigt den Sollwert auf manchen Bildschirmen in ganzen Grad; das Gerät selbst nimmt halbe Grad an.

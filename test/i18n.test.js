@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LANGUAGES } from '../src/config.js';
 import { FEATURE_KEYS, NAMES } from '../src/devices.js';
+import { HP_KEYS, HP_NAMES } from '../src/heatpump.js';
 import { CONNECTION_TEXT, INIT_FAILED, SEARCH_TEXT, searchMessage } from '../src/texts.js';
 import { TEXT } from '../src/widgets.js';
 
@@ -121,7 +122,7 @@ test('the name is short, recognizable and the same in every language', () => {
 });
 
 test('every message table of the code has the four languages', () => {
-  const longMessages = new Set(['pick', 'unknown']);
+  const longMessages = new Set(['pick', 'unknown', 'heatPump']);
   const found = [
     ...problems(INIT_FAILED, 'INIT_FAILED', MAX.message),
     ...Object.entries(CONNECTION_TEXT).flatMap(([key, value]) =>
@@ -159,6 +160,10 @@ test('the feature, mode and fan names exist in every language', () => {
   for (const key of Object.values(FEATURE_KEYS)) {
     assert.ok(NAMES.en[key], `no name for the feature ${key}`);
   }
+  assert.deepEqual(tableProblems(HP_NAMES, 'HP_NAMES', MAX.featureName), []);
+  for (const key of Object.values(HP_KEYS)) {
+    assert.ok(HP_NAMES.en[key], `no name for the heat pump feature ${key}`);
+  }
 });
 
 test('the search report exists in every language', () => {
@@ -176,7 +181,7 @@ test('the search report exists in every language', () => {
     invalidHosts: ['300.1.1.1'],
   });
   assert.deepEqual(problems(report, 'searchMessage', 600), []);
-  assert.match(report.de, /2 Klimaanlage\(n\), davon 1 erreichbar/);
+  assert.match(report.de, /2 Midea-Gerät\(e\), davon 1 erreichbar/);
   assert.match(report.es, /introduzca las direcciones IP/);
 });
 
@@ -243,6 +248,12 @@ test('the documentation names every feature, trigger, action and widget button',
     }
     for (const key of features) {
       assert.ok(doc.includes(NAMES[lang][key]), `docs/${lang}.md: feature "${NAMES[lang][key]}"`);
+    }
+    for (const key of Object.values(HP_KEYS)) {
+      assert.ok(
+        doc.includes(HP_NAMES[lang][key]),
+        `docs/${lang}.md: heat pump feature "${HP_NAMES[lang][key]}"`,
+      );
     }
     for (const key of ['turnOn', 'turnOff', 'settings']) {
       assert.ok(doc.includes(TEXT[key][lang]), `docs/${lang}.md: "${TEXT[key][lang]}"`);
