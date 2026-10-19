@@ -208,6 +208,7 @@ test('heat pump widget buttons: zone 1 on/off, setpoint down and up, settings fo
   assert.equal(ack.success, true, ack.error);
   assert.equal(pump.state.zone1Power, false);
   ack = await tap('zone_power');
+  assert.equal(ack.success, true, ack.error);
   assert.equal(pump.state.zone1Power, true);
   assert.equal(pump.state.mode, 3, 'switched on in its operating mode');
 
