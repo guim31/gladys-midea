@@ -15,6 +15,7 @@ export const FRAME_TYPE = {
 
 export const APPLIANCE = {
   AIR_CONDITIONER: 0xac,
+  DEHUMIDIFIER: 0xa1,
   HEAT_PUMP: 0xc3,
 };
 

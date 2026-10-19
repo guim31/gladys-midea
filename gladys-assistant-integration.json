@@ -3,10 +3,10 @@
   "type": "device",
   "name": "Midea",
   "description": {
-    "en": "Midea air conditioners, heat pumps and their rebrands on the local network: mode, setpoint, energy.",
-    "fr": "Climatiseurs, pompes à chaleur Midea et marques dérivées en réseau local : mode, consigne, énergie.",
-    "de": "Midea-Klimaanlagen, Wärmepumpen und baugleiche Marken im lokalen Netz: Modus, Sollwert, Energie.",
-    "es": "Aires acondicionados, bombas de calor Midea y marcas afines en red local: modo, consigna, energía."
+    "en": "Midea air conditioners, heat pumps, dehumidifiers and their rebrands, on the local network.",
+    "fr": "Climatiseurs, pompes à chaleur, déshumidificateurs Midea et marques dérivées, en réseau local.",
+    "de": "Midea-Klimaanlagen, Wärmepumpen, Luftentfeuchter und baugleiche Marken, im lokalen Netzwerk.",
+    "es": "Aires acondicionados, bombas de calor, deshumidificadores Midea y marcas afines, en red local."
   },
   "version": "1.1.0",
   "docker_image": "ghcr.io/guim31/gladys-midea:1.1.0",
@@ -510,10 +510,10 @@
         "es": "Filtro por limpiar"
       },
       "description": {
-        "en": "The air conditioner asks for its filter to be cleaned.",
-        "fr": "Le climatiseur demande le nettoyage de son filtre.",
-        "de": "Die Klimaanlage verlangt eine Reinigung ihres Filters.",
-        "es": "El aire acondicionado pide la limpieza de su filtro."
+        "en": "The air conditioner or dehumidifier asks for its filter to be cleaned.",
+        "fr": "Le climatiseur ou le déshumidificateur demande le nettoyage de son filtre.",
+        "de": "Die Klimaanlage oder der Luftentfeuchter verlangt eine Reinigung des Filters.",
+        "es": "El aire acondicionado o el deshumidificador pide la limpieza de su filtro."
       },
       "fields": [
         {
@@ -521,10 +521,10 @@
           "type": "select",
           "source": "devices",
           "label": {
-            "en": "Air conditioner",
-            "fr": "Climatiseur",
-            "de": "Klimaanlage",
-            "es": "Aire acondicionado"
+            "en": "Unit",
+            "fr": "Appareil",
+            "de": "Gerät",
+            "es": "Equipo"
           }
         }
       ]

@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { LANGUAGES } from '../src/config.js';
 import { FEATURE_KEYS, NAMES } from '../src/devices.js';
+import { DH_KEYS, DH_NAMES } from '../src/dehumidifier.js';
 import { HP_KEYS, HP_NAMES } from '../src/heatpump.js';
 import { CONNECTION_TEXT, INIT_FAILED, SEARCH_TEXT, searchMessage } from '../src/texts.js';
 import { TEXT } from '../src/widgets.js';
@@ -123,7 +124,7 @@ test('the name is short, recognizable and the same in every language', () => {
 });
 
 test('every message table of the code has the four languages', () => {
-  const longMessages = new Set(['pick', 'unknown', 'heatPump']);
+  const longMessages = new Set(['pick', 'unknown', 'notAirConditioner']);
   const found = [
     ...problems(INIT_FAILED, 'INIT_FAILED', MAX.message),
     ...Object.entries(CONNECTION_TEXT).flatMap(([key, value]) =>
@@ -165,6 +166,10 @@ test('the feature, mode and fan names exist in every language', () => {
     assert.ok(NAMES.en[key], `no name for the feature ${key}`);
   }
   assert.deepEqual(tableProblems(HP_NAMES, 'HP_NAMES', MAX.featureName), []);
+  assert.deepEqual(tableProblems(DH_NAMES, 'DH_NAMES', MAX.featureName), []);
+  for (const key of Object.values(DH_KEYS)) {
+    assert.ok(DH_NAMES.en[key], `no name for the dehumidifier feature ${key}`);
+  }
   for (const key of Object.values(HP_KEYS)) {
     assert.ok(HP_NAMES.en[key], `no name for the heat pump feature ${key}`);
   }
@@ -252,6 +257,12 @@ test('the documentation names every feature, trigger, action and widget button',
     }
     for (const key of features) {
       assert.ok(doc.includes(NAMES[lang][key]), `docs/${lang}.md: feature "${NAMES[lang][key]}"`);
+    }
+    for (const key of Object.values(DH_KEYS)) {
+      assert.ok(
+        doc.includes(DH_NAMES[lang][key]),
+        `docs/${lang}.md: dehumidifier feature "${DH_NAMES[lang][key]}"`,
+      );
     }
     for (const key of Object.values(HP_KEYS)) {
       assert.ok(

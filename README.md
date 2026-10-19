@@ -1,6 +1,6 @@
 # Midea for Gladys Assistant
 
-Local control of **Midea air conditioners** and **air-to-water heat pumps**, and of the units of related brands set up in the same apps, from [Gladys Assistant](https://gladysassistant.com): on/off, mode, setpoint, fan speed, swing, eco, turbo and sleep modes, indoor and outdoor temperature, humidity and energy consumption, over the Midea LAN protocol (TCP port 6444).
+Local control of **Midea air conditioners**, **air-to-water heat pumps** and **dehumidifiers**, and of the units of related brands set up in the same apps, from [Gladys Assistant](https://gladysassistant.com): on/off, mode, setpoint, fan speed, swing, eco, turbo and sleep modes, indoor and outdoor temperature, humidity and energy consumption, over the Midea LAN protocol (TCP port 6444).
 
 > **Developed without the hardware: feedback welcome.** The protocol code is a port of [msmart-ng](https://github.com/mill1000/midea-msmart) and [midea-local](https://github.com/midea-lan/midea-local), checked byte for byte against msmart-ng on real frames from its test suite, but it has not run against a physical unit yet. Please report what works and what does not in the [issues](https://github.com/guim31/gladys-midea/issues).
 
@@ -11,6 +11,7 @@ This project is not affiliated with Midea.
 - **Discovery**: the units on the same network as Gladys are found through the Gladys core (mediated UDP broadcast, ports 6445 and 20086); a unit on another subnet is reached by its typed IP address.
 - **One Gladys device per unit**, with only the features and options the unit announces: on/off, mode (auto, cool, heat, dry, fan), setpoint by half degrees, fan speed, vertical and horizontal swing, indoor and outdoor temperature, indoor humidity, eco, turbo and sleep modes, power draw and energy consumed.
 - **Air-to-water heat pumps** (appliance type `0xC3`, "Heat Pump Wi-Fi Controller", e.g. 171H120F): mode, setpoint, operating state and weather curve of each heating zone, domestic hot water on/off, setpoint and heating, tank, outdoor and water temperatures, water flow and pressure, eco, silent and super silent modes, compressor, defrosting, backup heater, error code, power draw, energy consumed and heat produced. Ported from midea-local, waiting for feedback on real units.
+- **Dehumidifiers** (appliance type `0xA1`: Midea, Comfee, Inventor...): on/off, mode, fan speed and target humidity, humidity, temperature, water tank level and tank full, child lock, ionizer, swing, drain pump. Ported from midea-local, waiting for feedback on real units.
 - **V2 and V3 units**: the units sold since about 2020 (V3) need a token and a key, fetched **once** from the Midea cloud (public NetHome Plus accounts by region, as msmart-ng does, or your own account), then kept in the integration volume (`/data`). Everything else is local.
 - **Refresh**: the integration reads every unit itself, every 30 seconds by default, and sends Gladys only what changed.
 - **Scenes**: triggers "Filter needs cleaning" and "Unit error" (with the error code); action "Run the air conditioner" (mode, setpoint and fan in one command).
@@ -32,7 +33,7 @@ In Gladys, open **Integrations → Install from GitHub** and enter this reposito
 
 ## Limits
 
-- Air conditioners and air-to-water heat pumps only: Midea dehumidifiers and other appliances are listed by the search as "not supported".
+- Air conditioners, air-to-water heat pumps and dehumidifiers only: other Midea appliances are listed by the search as "not supported".
 - Heat pumps: the tank booster heater, fast hot water and disinfection are left to the unit; the widget and the scene action are for air conditioners.
 - Louver positions, the display (LED) and the advanced presets (breeze, iECO, fresh air...) are not handled.
 - First-generation modules (V1) are not supported.

@@ -16,7 +16,9 @@ Midea baut für viele Marken; Geräte verwandter Marken wie Comfee, Carrier oder
 
 **Luft-Wasser-Wärmepumpen** (Midea-Gerätetyp `0xC3`, der „Heat Pump Wi-Fi Controller“ einer hydraulischen Wärmepumpe, z. B. Modell 171H120F) werden ebenfalls unterstützt: Heizzonen, Warmwasser, Eco- und leiser Modus, Wasser- und Außentemperaturen. Im Tab „Entdecken“ erscheinen sie wie die Klimaanlagen.
 
-Nicht unterstützt: andere Midea-Geräte (Luftentfeuchter, Warmwasserbereiter...), die die Suche als „nicht unterstützt“ meldet, und die allerersten WLAN-Module (Protokoll V1, um 2015).
+**Luftentfeuchter** (Midea-Gerätetyp `0xA1`: Midea, Comfee, Inventor... in der App SmartHome / MSmartHome eingerichtet) werden ebenfalls unterstützt.
+
+Nicht unterstützt: andere Midea-Geräte (Warmwasserbereiter, Ventilatoren...), die die Suche als „nicht unterstützt“ meldet, und die allerersten WLAN-Module (Protokoll V1, um 2015).
 
 ## Voraussetzungen
 
@@ -87,6 +89,23 @@ Eine Wärmepumpe (Typ `0xC3`) ist ein eigenes Gladys-Gerät, benannt „Wärmepu
 
 Der Zusatzheizstab des Speichers, das schnelle Warmwasser und die Legionellen-Desinfektion bleiben dem Gerät und seiner Steuerung überlassen. Das Widget „Midea-Gerät“ hat eine Wärmepumpen-Ansicht (siehe Widget); die Szenenaktion „Klimaanlage starten“ ist nur für Klimaanlagen; der Auslöser „Gerätefehler“ funktioniert auch für Wärmepumpen. Die Unterstützung der Wärmepumpen wurde nach dem Code von midea-local geschrieben und wartet auf Rückmeldungen von echten Geräten.
 
+### Luftentfeuchter
+
+Ein Luftentfeuchter (Typ `0xA1`) ist ein eigenes Gladys-Gerät, benannt „Luftentfeuchter“, gefolgt von den letzten vier Zeichen seines WLAN-Namens. Gladys hat keine Luftentfeuchter-Kategorie: Modus, Lüfterstufe und Zielfeuchte sind Auswahllisten, wie bei der Tuya-Integration.
+
+| Funktion                                           | Was sie tut                                                                |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Ein/Aus**                                        | Schaltet den Luftentfeuchter ein oder aus.                                 |
+| **Modus**                                          | Sollwert, Dauerbetrieb, Automatisch, Wäschetrocknung, Schuhtrocknung.      |
+| **Lüfterstufe**                                    | Sehr niedrig, Niedrig, Mittel, Hoch, Automatisch.                          |
+| **Zielfeuchte**                                    | 35 bis 85 %, in Schritten von 5 (der Sollwert des Modus „Sollwert“).       |
+| **Luftfeuchtigkeit**, **Temperatur**               | Vom Gerät gemessen.                                                        |
+| **Füllstand des Wassertanks**, **Wassertank voll** | Der Füllstand (%) und ob er den am Gerät eingestellten Stand erreicht hat. |
+| **Kindersicherung**, **Ionisator**, **Schwenken**  | Die Optionen des Geräts.                                                   |
+| **Ablaufpumpe**                                    | Nur bei einem Gerät, das eine hat.                                         |
+
+Der Auslöser „Filter muss gereinigt werden“ funktioniert auch für Luftentfeuchter. Die Szenenaktion „Klimaanlage starten“ und das Widget sind nur für Klimaanlagen. Die Unterstützung der Luftentfeuchter wurde nach dem Code von midea-local geschrieben und wartet auf Rückmeldungen von echten Geräten.
+
 ## Widget
 
 Das Widget **Midea-Gerät** (wähle das Gerät in seinen Einstellungen) passt sich der Geräteart an. Bei einer Klimaanlage zeigt es die Raumtemperatur, den Sollwert und die Außentemperatur (oder die Feuchte), dann den Modus, den Lüfter, den Filterzustand und den Fehlercode des Geräts. Seine Tasten:
@@ -141,7 +160,7 @@ Zum Ausschalten oder um eine einzelne Einstellung zu ändern, nutze die Standard
 ## Grenzen
 
 - Ohne die Hardware entwickelt: Rückmeldungen sind auf [GitHub](https://github.com/guim31/gladys-midea/issues) willkommen.
-- Nur Klimaanlagen und Luft-Wasser-Wärmepumpen: Luftentfeuchter und andere Midea-Geräte werden noch nicht unterstützt.
+- Nur Klimaanlagen, Luft-Wasser-Wärmepumpen und Luftentfeuchter: andere Midea-Geräte werden noch nicht unterstützt.
 - Lamellenpositionen, die Anzeige (LED) und erweiterte Voreinstellungen (Breeze, iECO, Frischluft...) werden nicht unterstützt.
 - Die Module der ersten Generation (V1) werden nicht unterstützt.
 - Gladys zeigt den Sollwert auf manchen Bildschirmen in ganzen Grad; das Gerät selbst nimmt halbe Grad an.

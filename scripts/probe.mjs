@@ -11,7 +11,8 @@
 //   node scripts/probe.mjs --host 192.168.1.60 [--region DE]
 //       Sends the discovery request to the unit, then reads (never writes) its
 //       capabilities and state; a V3 unit gets its key from the cloud first.
-//       An air conditioner (0xAC) and a heat pump (0xC3) are both read.
+//       An air conditioner (0xAC), a heat pump (0xC3) and a dehumidifier
+//       (0xA1) are read.
 //
 //   MIDEA_TOKEN=… MIDEA_KEY=… node scripts/probe.mjs --host 192.168.1.61
 //       A V3 unit with the token and key known elsewhere (e.g. Home
@@ -37,6 +38,7 @@ import {
   getQueryCommand,
   isApplianceAnswer,
 } from '../src/midea/c3.js';
+import { decodeA1Response, getA1StateCommand, isA1State } from '../src/midea/a1.js';
 import { APPLIANCE } from '../src/midea/frame.js';
 import { MideaLan } from '../src/midea/lan.js';
 import { udpId } from '../src/midea/security.js';
@@ -78,15 +80,18 @@ async function probeUnit(host) {
       `ssid ${info.ssid}, model ${info.model || '?'}, serial ${mask(info.serial)}, id ${mask(String(info.deviceId))}`,
   );
   const heatPump = info.type === APPLIANCE.HEAT_PUMP;
-  if (!heatPump && info.type !== APPLIANCE.AIR_CONDITIONER) {
-    say('not an air conditioner nor a heat pump: not supported');
+  const dehumidifier = info.type === APPLIANCE.DEHUMIDIFIER;
+  if (!heatPump && !dehumidifier && info.type !== APPLIANCE.AIR_CONDITIONER) {
+    say('not an air conditioner, a heat pump nor a dehumidifier: not supported');
     return;
   }
   // The read that proves a session works, by kind of unit.
   const check = (lan) =>
     heatPump
       ? lan.request(getQueryCommand(BODY_TYPE.BASIC), answersBody(BODY_TYPE.BASIC))
-      : lan.request(getStateCommand(), (frame) => frame[10] === 0xc0);
+      : dehumidifier
+        ? lan.request(getA1StateCommand(), isA1State)
+        : lan.request(getStateCommand(), (frame) => frame[10] === 0xc0);
   let credentials = null;
   const { MIDEA_TOKEN: token, MIDEA_KEY: key } = process.env;
   if (info.version === 3 && token && key) {
@@ -115,6 +120,14 @@ async function probeUnit(host) {
     if (!credentials) return;
   }
   const lan = new MideaLan({ ...info, credentials });
+  if (dehumidifier) {
+    try {
+      say(`state: ${JSON.stringify(decodeA1Response(await check(lan)))}`);
+    } finally {
+      lan.close();
+    }
+    return;
+  }
   if (heatPump) {
     try {
       await probeHeatPump(lan);
