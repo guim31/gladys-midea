@@ -66,9 +66,10 @@ test('fleet diagnostic: every unit, masked, without any secret', async (t) => {
   const ac = new FakeMidea({ host: '192.0.2.10' });
   const pump = new FakeHeatPump({ host: '192.0.2.40', version: 3 });
   const dehumidifier = new FakeMidea({ host: '192.0.2.20', type: 0xa1 });
+  const unknown = new FakeMidea({ host: '192.0.2.30', type: 0xcc });
   const other = new FakeHeatPump({ host: '192.0.2.41', version: 3 });
   const created = await world(t, {
-    units: [ac, pump, dehumidifier],
+    units: [ac, pump, dehumidifier, unknown],
     config: {
       language: 'fr',
       cloud_account: 'someone@example.com',
@@ -80,12 +81,13 @@ test('fleet diagnostic: every unit, masked, without any secret', async (t) => {
   const text = report(await created.fake.action('fleet_diagnostic', {}));
 
   assert.match(text, /Midea diagnostic/);
-  assert.match(text, /Units known: 2/);
+  assert.match(text, /Units known: 3/);
+  assert.match(text, /\(dehumidifier 0xA1, V2, model/);
   assert.match(text, /Climatiseur|Air conditioner/);
   assert.match(text, /\(heat pump 0xC3, V3, model/);
   assert.match(text, /keys: present \(cloud\)/);
   assert.match(text, /keys: not needed \(V2\)/);
-  assert.match(text, /not supported: appliance 0xA1/);
+  assert.match(text, /not supported: appliance 0xCC/);
   assert.match(text, /own NetHome Plus account: yes, typed token\/key pairs: 1/);
   assert.match(text, /"zoneTargets":\[50,25\]/);
   assert.match(text, /answering: yes, last read \d+ s ago/);
@@ -151,10 +153,10 @@ test('unit test: an air conditioner is read without any control frame', async (t
 });
 
 test('unit test: a typed address of an unsupported appliance gives its discovery answer', async (t) => {
-  const dehumidifier = new FakeMidea({ host: '192.0.2.20', type: 0xa1 });
-  const created = await world(t, { units: [dehumidifier], scan: false });
+  const unit = new FakeMidea({ host: '192.0.2.20', type: 0xcc });
+  const created = await world(t, { units: [unit], scan: false });
   const text = report(await created.fake.action('test_device', { device_ref: '192.0.2.20' }));
-  assert.match(text, /Discovery answer from <local-ip>: appliance 0xA1, V2/);
+  assert.match(text, /Discovery answer from <local-ip>: appliance 0xCC, V2/);
   assert.match(text, /not supported yet: paste this report in a GitHub issue/);
   assert.ok(!text.includes('192.0.2.20'));
 

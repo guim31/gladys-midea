@@ -612,3 +612,93 @@ export class FakeHeatPump extends FakeMidea {
     return [];
   }
 }
+
+// --- Dehumidifiers (appliance 0xA1) ----------------------------------------------
+
+const DEFAULT_DEHUMIDIFIER = {
+  power: true,
+  mode: 3,
+  fanSpeed: 60,
+  targetHumidity: 55,
+  childLock: false,
+  anion: false,
+  pump: false,
+  pumpEnabled: false,
+  filterAlert: false,
+  tank: 30,
+  waterLevelSet: 50,
+  humidity: 62,
+  temperature: 21,
+  swing: false,
+};
+
+/** The state body (0xC8) of a dehumidifier, midea-local's layout. */
+export function dehumidifierBody(state) {
+  const body = new Array(25).fill(0);
+  body[0] = 0xc8;
+  body[1] = state.power ? 1 : 0;
+  body[2] = state.mode;
+  body[3] = state.fanSpeed;
+  body[7] = state.targetHumidity;
+  body[8] = state.childLock ? 0x80 : 0;
+  body[9] =
+    (state.anion ? 0x40 : 0) |
+    (state.pump ? 0x08 : 0) |
+    (state.pumpEnabled ? 0x10 : 0) |
+    (state.filterAlert ? 0x80 : 0);
+  body[10] = state.tank;
+  body[15] = state.waterLevelSet;
+  body[16] = state.humidity;
+  body[17] = Math.round(state.temperature * 2 + 50);
+  body[19] = state.swing ? 0x20 : 0;
+  return body;
+}
+
+export class FakeDehumidifier extends FakeMidea {
+  /**
+   * @param {object} options FakeMidea options, and:
+   * @param {object} [options.state] DEFAULT_DEHUMIDIFIER overrides
+   */
+  constructor({ state = {}, ...options } = {}) {
+    super({ ...options, type: 0xa1, caps: null });
+    this.state = { ...DEFAULT_DEHUMIDIFIER, ...state };
+    this.frames = [];
+  }
+
+  frame(frameType, body) {
+    return buildFrame(frameType, body, { id: 0, appliance: 0xa1 });
+  }
+
+  /** Push the state without request, as the unit does after a change on it. */
+  push() {
+    this.send(
+      this.latest.session,
+      this.latest.socket,
+      this.frame(0x04, dehumidifierBody(this.state)),
+    );
+  }
+
+  answer(frame) {
+    this.frames.push(frame);
+    const body = frame.subarray(10, frame.length - 2);
+    if (frame[9] === 0x03 && body[0] === 0x41) {
+      return [this.frame(FRAME_TYPE.QUERY, dehumidifierBody(this.state))];
+    }
+    if (frame[9] === 0x02 && body[0] === 0x48) {
+      Object.assign(this.state, {
+        power: Boolean(body[1] & 1),
+        beep: Boolean(body[1] & 0x40),
+        mode: body[2],
+        fanSpeed: body[3],
+        targetHumidity: body[7],
+        childLock: Boolean(body[8] & 0x80),
+        anion: Boolean(body[9] & 0x40),
+        pump: Boolean(body[9] & 0x08),
+        swing: Boolean(body[10] & 0x08),
+        waterLevelSet: body[13],
+      });
+      return [this.frame(FRAME_TYPE.CONTROL, dehumidifierBody(this.state))];
+    }
+    return [];
+  }
+}

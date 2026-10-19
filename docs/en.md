@@ -16,7 +16,9 @@ Midea builds units for many brands; units of related brands such as Comfee, Carr
 
 **Air-to-water heat pumps** (Midea appliance type `0xC3`, the "Heat Pump Wi-Fi Controller" of a hydronic heat pump, e.g. model 171H120F) are also supported: heating zones, domestic hot water, eco and silent modes, water and outdoor temperatures. They show up in the Discovery tab like the air conditioners.
 
-Not supported: other Midea appliances (dehumidifiers, water heaters...), which the search lists as "not supported", and the very first Wi-Fi modules (protocol V1, around 2015).
+**Dehumidifiers** (Midea appliance type `0xA1`: Midea, Comfee, Inventor... set up in the SmartHome / MSmartHome app) are supported too.
+
+Not supported: other Midea appliances (water heaters, fans...), which the search lists as "not supported", and the very first Wi-Fi modules (protocol V1, around 2015).
 
 ## Requirements
 
@@ -87,6 +89,23 @@ A heat pump (type `0xC3`) is a Gladys device of its own, named "Heat pump" follo
 
 The tank booster heater, fast hot water and anti-legionella disinfection stay in the hands of the unit and its controller. The "Midea unit" widget has a heat pump view (see Widget); the "Run the air conditioner" scene action is for air conditioners only; the "Unit error" trigger works for heat pumps too. Heat pump support was written from midea-local's code and is waiting for feedback on real units.
 
+### Dehumidifiers
+
+A dehumidifier (type `0xA1`) is a Gladys device of its own, named "Dehumidifier" followed by the last four characters of its Wi-Fi name. Gladys has no dehumidifier category: the mode, the fan speed and the target humidity are selection lists, as on the Tuya integration.
+
+| Feature                                   | What it does                                                         |
+| ----------------------------------------- | -------------------------------------------------------------------- |
+| **On/off**                                | Turns the dehumidifier on or off.                                    |
+| **Mode**                                  | Setpoint, Continuous, Auto, Clothes drying, Shoes drying.            |
+| **Fan speed**                             | Lowest, Low, Medium, High, Auto.                                     |
+| **Target humidity**                       | 35 to 85 %, by steps of 5 (the setpoint of the "Setpoint" mode).     |
+| **Humidity**, **Temperature**             | Measured by the unit.                                                |
+| **Water tank level**, **Water tank full** | The tank level (%) and whether it reached the level set on the unit. |
+| **Child lock**, **Ionizer**, **Swing**    | The options of the unit.                                             |
+| **Drain pump**                            | Only on a unit that has one.                                         |
+
+The "Filter needs cleaning" trigger works for dehumidifiers too. The "Run the air conditioner" scene action and the widget are for air conditioners only. Dehumidifier support was written from midea-local's code and is waiting for feedback on real units.
+
 ## Widget
 
 The **Midea unit** widget (choose the unit in its settings) adapts to the kind of unit. For an air conditioner, it shows the room temperature, the setpoint and the outdoor temperature (or the humidity), then the mode, the fan speed, the filter state and the error code of the unit. Its buttons:
@@ -141,7 +160,7 @@ Turning the unit off, or changing a single setting, uses the standard "Control a
 ## Limits
 
 - Developed without the hardware: feedback welcome on [GitHub](https://github.com/guim31/gladys-midea/issues).
-- Air conditioners and air-to-water heat pumps only: dehumidifiers and other Midea appliances are not supported yet.
+- Air conditioners, air-to-water heat pumps and dehumidifiers only: other Midea appliances are not supported yet.
 - The louver positions, the display (LED) and the advanced presets (breeze, iECO, fresh air...) are not handled.
 - The first-generation modules (V1) are not supported.
 - Gladys shows the setpoint by whole degrees on some screens; the unit itself takes half degrees.

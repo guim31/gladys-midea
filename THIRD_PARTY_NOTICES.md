@@ -5,7 +5,9 @@ two projects below, both under the MIT license, whose notices follow. The
 fixtures in `test/fixtures/msmart-vectors.json` were produced by running
 msmart-ng and include frames from its test suite. The heat pump (0xC3) frames
 in `src/midea/c3.js` are ported from midea-local, and
-`test/fixtures/midea-local-c3-vectors.json` was produced by running it.
+`test/fixtures/midea-local-c3-vectors.json` was produced by running it. The
+dehumidifier (0xA1) commands in `src/midea/a1.js` are ported from midea-local
+too, and `test/fixtures/midea-local-a1-vectors.json` was produced by running it.
 
 ## msmart-ng (https://github.com/mill1000/midea-msmart)
 

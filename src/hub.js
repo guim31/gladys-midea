@@ -32,6 +32,7 @@ import {
   setStateCommand,
   summarizeCapabilities,
 } from './midea/ac.js';
+import { decodeA1Response, getA1StateCommand, isA1State, setA1StateCommand } from './midea/a1.js';
 import {
   BODY_TYPE,
   SILENT_LEVEL,
@@ -51,6 +52,15 @@ import { APPLIANCE } from './midea/frame.js';
 import { MideaLan } from './midea/lan.js';
 import { udpId } from './midea/security.js';
 import { probeHost } from './midea/udp.js';
+import {
+  buildDehumidifier,
+  dehumidifierCommand,
+  dehumidifierFeatureSpecs,
+  dehumidifierIds,
+  dehumidifierName,
+  dehumidifierValues,
+  summarizeDehumidifier,
+} from './dehumidifier.js';
 import {
   buildHeatPump,
   heatPumpCommand,
@@ -93,8 +103,40 @@ const WIDGET_KEYS = [
   FEATURE_KEYS.TARGET_TEMPERATURE,
 ];
 
-const SUPPORTED = [APPLIANCE.AIR_CONDITIONER, APPLIANCE.HEAT_PUMP];
+const SUPPORTED = [APPLIANCE.AIR_CONDITIONER, APPLIANCE.HEAT_PUMP, APPLIANCE.DEHUMIDIFIER];
 export const isHeatPump = (record) => record.type === APPLIANCE.HEAT_PUMP;
+export const isDehumidifier = (record) => record.type === APPLIANCE.DEHUMIDIFIER;
+export const isAirConditioner = (record) => record.type === APPLIANCE.AIR_CONDITIONER;
+
+// The Gladys side of each kind of unit: external ids, names, device payload,
+// features and values.
+const KINDS = {
+  [APPLIANCE.AIR_CONDITIONER]: {
+    noun: 'air conditioner',
+    ids: deviceIds,
+    name: deviceName,
+    build: buildDevice,
+    specs: featureSpecs,
+    values: (record) => deviceValues(record),
+  },
+  [APPLIANCE.HEAT_PUMP]: {
+    noun: 'heat pump',
+    ids: heatPumpIds,
+    name: heatPumpName,
+    build: buildHeatPump,
+    specs: heatPumpFeatureSpecs,
+    values: heatPumpValues,
+  },
+  [APPLIANCE.DEHUMIDIFIER]: {
+    noun: 'dehumidifier',
+    ids: dehumidifierIds,
+    name: dehumidifierName,
+    build: buildDehumidifier,
+    specs: dehumidifierFeatureSpecs,
+    values: (record) => dehumidifierValues(record),
+  },
+};
+const kindOf = (record) => KINDS[record.type] ?? KINDS[APPLIANCE.AIR_CONDITIONER];
 
 const isState = (frame) => frame[10] === RESPONSE_ID.STATE;
 const isCapabilities = (frame) => frame[10] === RESPONSE_ID.CAPABILITIES && frame[9] === 0x03;
@@ -306,8 +348,8 @@ export class MideaHub {
         filterAlert: typeof saved.filterAlert === 'boolean' ? saved.filterAlert : null,
         errorCode: Number.isInteger(saved.errorCode) ? saved.errorCode : null,
       });
-      if (isHeatPump(record)) {
-        // A heat pump keeps its summary (src/heatpump.js) as its capabilities.
+      if (!isAirConditioner(record)) {
+        // A heat pump or a dehumidifier keeps its summary as its capabilities.
         record.caps = record.rawCaps?.known ? record.rawCaps : null;
         record.capsQueried = record.capsQueried && record.caps !== null;
       } else {
@@ -386,7 +428,7 @@ export class MideaHub {
       keySource: null,
       published: {},
     };
-    record.caps = isHeatPump(record) ? null : summarizeCapabilities(null);
+    record.caps = isAirConditioner(record) ? summarizeCapabilities(null) : null;
     record.lan = this.createLan({
       host: record.host,
       port: record.port,
@@ -394,10 +436,13 @@ export class MideaHub {
       version: record.version,
       credentials: null,
       logger: createLogger({ name: 'midea-lan' }),
-      // A heat pump pushes its state and energy counters between the reads.
+      // A heat pump pushes its state and energy counters between the reads,
+      // a dehumidifier its state.
       onUnsolicited: isHeatPump(record)
         ? (frame) => this.track(this.heatPumpPush(record, frame))
-        : undefined,
+        : isDehumidifier(record)
+          ? (frame) => this.track(this.dehumidifierPush(record, frame))
+          : undefined,
     });
     return record;
   }
@@ -498,9 +543,8 @@ export class MideaHub {
     if (!record) {
       record = this.createRecord(info);
       this.records.set(record.id, record);
-      const kind = isHeatPump(record) ? 'heat pump' : 'air conditioner';
       logger.info(
-        `Midea ${kind} ${info.ssid || info.deviceId} (V${info.version}) found at ${info.host}`,
+        `Midea ${kindOf(record).noun} ${info.ssid || info.deviceId} (V${info.version}) found at ${info.host}`,
       );
       return record;
     }
@@ -567,6 +611,9 @@ export class MideaHub {
 
   /** The read that checks a session: the state query of the unit's kind. */
   async probe(record) {
+    if (isDehumidifier(record)) {
+      return record.lan.request(getA1StateCommand(), isA1State);
+    }
     if (!isHeatPump(record)) {
       return record.lan.request(getStateCommand(), isState);
     }
@@ -664,6 +711,15 @@ export class MideaHub {
   async queryCapabilities(record) {
     if (isHeatPump(record)) {
       await this.queryHeatPump(record);
+      return;
+    }
+    if (isDehumidifier(record)) {
+      // No capability query: what the unit has shows in its first state.
+      const { state } = decodeA1Response(await this.probe(record));
+      record.state = state;
+      record.rawCaps = summarizeDehumidifier(state);
+      record.caps = record.rawCaps;
+      record.capsQueried = true;
       return;
     }
     let raw = null;
@@ -770,9 +826,7 @@ export class MideaHub {
 
   async publishDevices() {
     const devices = this.publishable().map((record) =>
-      isHeatPump(record)
-        ? buildHeatPump(this.gladys, record, this.config.language)
-        : buildDevice(this.gladys, record, this.config.language),
+      kindOf(record).build(this.gladys, record, this.config.language),
     );
     await this.gladys.publishDiscoveredDevices(devices);
   }
@@ -782,13 +836,11 @@ export class MideaHub {
     if (typeof externalId !== 'string') {
       return null;
     }
-    for (const [prefix, heatPump] of [
-      [deviceIds(this.gladys, '').device, false],
-      [heatPumpIds(this.gladys, '').device, true],
-    ]) {
+    for (const [type, kind] of Object.entries(KINDS)) {
+      const prefix = kind.ids(this.gladys, '').device;
       if (externalId.startsWith(prefix)) {
         const record = this.records.get(Number(externalId.slice(prefix.length)));
-        return record && isHeatPump(record) === heatPump ? record : null;
+        return record && record.type === Number(type) ? record : null;
       }
     }
     return null;
@@ -796,14 +848,12 @@ export class MideaHub {
 
   /** The Gladys external ids of a unit. */
   ids(record) {
-    return isHeatPump(record)
-      ? heatPumpIds(this.gladys, record.id)
-      : deviceIds(this.gladys, record.id);
+    return kindOf(record).ids(this.gladys, record.id);
   }
 
   /** The name of a unit's device in a language. */
   name(record, language) {
-    return isHeatPump(record) ? heatPumpName(record, language) : deviceName(record, language);
+    return kindOf(record).name(record, language);
   }
 
   require(externalId) {
@@ -831,11 +881,8 @@ export class MideaHub {
       return [];
     }
     const ids = this.ids(record);
-    const heatPump = isHeatPump(record);
-    const values = heatPump ? heatPumpValues(record, this.config.language) : deviceValues(record);
-    const specs = heatPump
-      ? heatPumpFeatureSpecs(record, this.config.language)
-      : featureSpecs(record, this.config.language);
+    const values = kindOf(record).values(record, this.config.language);
+    const specs = kindOf(record).specs(record, this.config.language);
     const states = [];
     const changed = [];
     for (const spec of specs) {
@@ -977,7 +1024,11 @@ export class MideaHub {
     record.lastPolledAt = Date.now();
     let reading;
     try {
-      reading = isHeatPump(record) ? await this.readHeatPump(record) : await this.readAc(record);
+      reading = isHeatPump(record)
+        ? await this.readHeatPump(record)
+        : isDehumidifier(record)
+          ? { state: decodeA1Response(await this.probe(record)).state, extra: {} }
+          : await this.readAc(record);
     } catch (err) {
       if (rethrow) {
         throw err;
@@ -1091,9 +1142,8 @@ export class MideaHub {
     record.failures = 0;
     record.lastReadAt = Date.now();
     record.lastError = null;
-    const heatPump = isHeatPump(record);
     let structureChanged = false;
-    if (!heatPump && state.outdoorTemperature !== null && !record.hasOutdoor) {
+    if (isAirConditioner(record) && state.outdoorTemperature !== null && !record.hasOutdoor) {
       record.hasOutdoor = true;
       structureChanged = true;
     }
@@ -1105,14 +1155,14 @@ export class MideaHub {
       this.requestWidgetRefresh();
     }
     let persist = structureChanged;
-    if (!heatPump && record.filterAlert !== state.filterAlert) {
+    if (typeof state.filterAlert === 'boolean' && record.filterAlert !== state.filterAlert) {
       if (record.filterAlert === false && state.filterAlert) {
         this.fire(record, TRIGGERS.FILTER, {});
       }
       record.filterAlert = state.filterAlert;
       persist = true;
     }
-    if (record.errorCode !== state.errorCode) {
+    if (Number.isInteger(state.errorCode) && record.errorCode !== state.errorCode) {
       if (record.errorCode !== null && state.errorCode !== 0) {
         logger.info(`${this.label(record)} reports error code ${state.errorCode}`);
         this.fire(record, TRIGGERS.ERROR, {
@@ -1296,6 +1346,50 @@ export class MideaHub {
     return record;
   }
 
+  /**
+   * Send a dehumidifier its whole set of settings, then take the state it
+   * answers (or assume the settings took, like the air conditioner).
+   */
+  async sendDehumidifier(record, settings) {
+    record.commandSeq += 1;
+    let answer;
+    try {
+      answer = await record.lan.request(
+        setA1StateCommand(settings, { beep: this.config.beep }),
+        isA1State,
+      );
+    } catch (err) {
+      if (err.unreachable) {
+        await this.failed(record, { now: true });
+        throw new Error(`${this.label(record)} does not answer at ${record.host}`, { cause: err });
+      }
+      throw err;
+    }
+    let state = null;
+    try {
+      const decoded = decodeA1Response(answer);
+      state = decoded.kind === 'state' ? decoded.state : null;
+    } catch {
+      // An acknowledgement without state: assume the settings took.
+    }
+    await this.applyReading(record, state ?? settings);
+  }
+
+  /** The state a dehumidifier pushes after a change made on the unit. */
+  async dehumidifierPush(record, frame) {
+    try {
+      const decoded = decodeA1Response(frame);
+      if (decoded.kind === 'state' && record.capsQueried) {
+        await this.applyReading(record, decoded.state);
+        return;
+      }
+    } catch (err) {
+      logger.debug(`${this.label(record)}: ${err.message}`);
+      return;
+    }
+    logger.debug(`${this.label(record)}: unsolicited ${frame.toString('hex')}`);
+  }
+
   /** A Gladys command on a feature of one of the units. */
   async setValue(device, feature, value) {
     const record = this.require(device?.external_id);
@@ -1309,6 +1403,10 @@ export class MideaHub {
       await this.sendHeatPump(record, heatPumpCommand(record, key, value));
       return;
     }
+    if (isDehumidifier(record)) {
+      await this.sendDehumidifier(record, dehumidifierCommand(record, key, value));
+      return;
+    }
     await this.send(record, applyCommand(record, key, value));
   }
 
@@ -1318,8 +1416,8 @@ export class MideaHub {
    */
   async applySettings(deviceExternalId, settings) {
     const record = this.require(deviceExternalId);
-    if (isHeatPump(record)) {
-      throw new Error(`${this.label(record)} is a heat pump, not an air conditioner`);
+    if (!isAirConditioner(record)) {
+      throw new Error(`${this.label(record)} is a ${kindOf(record).noun}, not an air conditioner`);
     }
     await this.currentState(record);
     let next = { ...record.state };

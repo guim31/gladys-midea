@@ -16,7 +16,9 @@ Midea fabrica para muchas marcas; los equipos de marcas afines como Comfee, Carr
 
 Las **bombas de calor aire-agua** (tipo de aparato Midea `0xC3`, el «Heat Pump Wi-Fi Controller» de una bomba de calor hidráulica, por ejemplo el modelo 171H120F) también son compatibles: zonas de calefacción, agua caliente sanitaria, modos eco y silencioso, temperaturas del agua y exterior. Aparecen en la pestaña Descubrir como los aires acondicionados.
 
-No compatibles: los demás aparatos Midea (deshumidificadores, calentadores de agua...), que la búsqueda indica como «no compatible», y los primeros módulos Wi-Fi (protocolo V1, hacia 2015).
+Los **deshumidificadores** (tipo de aparato Midea `0xA1`: Midea, Comfee, Inventor... configurados en la aplicación SmartHome / MSmartHome) también son compatibles.
+
+No compatibles: los demás aparatos Midea (calentadores de agua, ventiladores...), que la búsqueda indica como «no compatible», y los primeros módulos Wi-Fi (protocolo V1, hacia 2015).
 
 ## Requisitos
 
@@ -87,6 +89,23 @@ Una bomba de calor (tipo `0xC3`) es un dispositivo de Gladys propio, llamado «B
 
 La resistencia de apoyo del depósito, el agua caliente rápida y la desinfección antilegionela quedan en manos del equipo y de su mando. El widget «Equipo Midea» tiene una vista de bomba de calor (véase Widget); la acción de escena «Poner en marcha el aire» es solo para aires acondicionados; el disparador «Error del equipo» funciona también para las bombas de calor. La compatibilidad con las bombas de calor se escribió a partir del código de midea-local y espera comentarios sobre equipos reales.
 
+### Deshumidificadores
+
+Un deshumidificador (tipo `0xA1`) es un dispositivo de Gladys propio, llamado «Deshumidificador» seguido de los cuatro últimos caracteres de su nombre Wi-Fi. Gladys no tiene categoría de deshumidificador: el modo, la velocidad del ventilador y la humedad objetivo son listas de selección, como en la integración Tuya.
+
+| Función                                             | Qué hace                                                                    |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Encendido/apagado**                               | Enciende o apaga el deshumidificador.                                       |
+| **Modo**                                            | Consigna, Continuo, Automático, Secado de ropa, Secado de calzado.          |
+| **Velocidad del ventilador**                        | Muy baja, Baja, Media, Alta, Automática.                                    |
+| **Humedad objetivo**                                | De 35 a 85 %, de 5 en 5 (la consigna del modo «Consigna»).                  |
+| **Humedad**, **Temperatura**                        | Medidas por el equipo.                                                      |
+| **Nivel del depósito**, **Depósito lleno**          | El nivel del depósito (%) y si ha alcanzado el nivel ajustado en el equipo. |
+| **Bloqueo infantil**, **Ionizador**, **Oscilación** | Las opciones del equipo.                                                    |
+| **Bomba de desagüe**                                | Solo en un equipo que la tenga.                                             |
+
+El disparador «Filtro por limpiar» funciona también para los deshumidificadores. La acción de escena «Poner en marcha el aire» y el widget son solo para aires acondicionados. La compatibilidad con los deshumidificadores se escribió a partir del código de midea-local y espera comentarios sobre equipos reales.
+
 ## Widget
 
 El widget **Equipo Midea** (elija el equipo en su configuración) se adapta al tipo de equipo. Para un aire acondicionado, muestra la temperatura de la estancia, la consigna y la temperatura exterior (o la humedad), y después el modo, el ventilador, el estado del filtro y el código de error del equipo. Sus botones:
@@ -141,7 +160,7 @@ Para apagar el equipo, o cambiar un solo ajuste, utilice la acción estándar «
 ## Limitaciones
 
 - Desarrollada sin el hardware: sus comentarios son bienvenidos en [GitHub](https://github.com/guim31/gladys-midea/issues).
-- Solo aires acondicionados y bombas de calor aire-agua: los deshumidificadores y otros aparatos Midea aún no son compatibles.
+- Solo aires acondicionados, bombas de calor aire-agua y deshumidificadores: los demás aparatos Midea aún no son compatibles.
 - Las posiciones de las lamas, la pantalla (LED) y los preajustes avanzados (breeze, iECO, aire fresco...) no se gestionan.
 - Los módulos de primera generación (V1) no son compatibles.
 - Gladys muestra la consigna en grados enteros en algunas pantallas; el equipo, en cambio, acepta medios grados.

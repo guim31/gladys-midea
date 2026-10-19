@@ -145,12 +145,13 @@ export function formatAge(at, now) {
 }
 
 const yesNo = (value) => (value ? 'yes' : 'no');
+const KIND_NAMES = {
+  [APPLIANCE.HEAT_PUMP]: 'heat pump 0xC3',
+  [APPLIANCE.AIR_CONDITIONER]: 'air conditioner 0xAC',
+  [APPLIANCE.DEHUMIDIFIER]: 'dehumidifier 0xA1',
+};
 const kindOf = (type) =>
-  type === APPLIANCE.HEAT_PUMP
-    ? 'heat pump 0xC3'
-    : type === APPLIANCE.AIR_CONDITIONER
-      ? 'air conditioner 0xAC'
-      : `appliance 0x${Number(type).toString(16).toUpperCase()}`;
+  KIND_NAMES[type] ?? `appliance 0x${Number(type).toString(16).toUpperCase()}`;
 
 /** The redactor of a hub: every secret, identifier and address it knows. */
 export function redactorFor(hub, includeIdentifiers) {
@@ -462,7 +463,7 @@ export async function buildTestReport(
     );
     return redactor.scrub(lines.join('\n'));
   }
-  const supported = [APPLIANCE.AIR_CONDITIONER, APPLIANCE.HEAT_PUMP].includes(info.type);
+  const supported = Object.hasOwn(KIND_NAMES, info.type);
   const scrubber = createRedactor({
     includeIdentifiers,
     hosts: [host, info.host],

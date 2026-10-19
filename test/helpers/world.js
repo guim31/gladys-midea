@@ -13,7 +13,14 @@ import { registerHandlers } from '../../src/app.js';
 import { DEVICE_TYPE } from '../../src/devices.js';
 import { MideaLan } from '../../src/midea/lan.js';
 import { Store } from '../../src/store.js';
-import { CAPS, FakeHeatPump, FakeMidea, createFakeCloud, createNetwork } from './fakeMidea.js';
+import {
+  CAPS,
+  FakeDehumidifier,
+  FakeHeatPump,
+  FakeMidea,
+  createFakeCloud,
+  createNetwork,
+} from './fakeMidea.js';
 
 // The integration logs every change; keep the test output readable.
 process.env.LOG_LEVEL ??= 'silent';
@@ -27,7 +34,8 @@ export const FAST_LAN = {
 
 /**
  * One V2 unit, one V3 unit with two capability pages, one metered V3 unit, a
- * window unit, an old unit, and a V3 heat pump with two zones that cools.
+ * window unit, an old unit, a V3 heat pump with two zones that cools, and a
+ * dehumidifier with a drain pump.
  */
 export function allUnits() {
   return [
@@ -46,6 +54,7 @@ export function allUnits() {
       version: 3,
       state: { doubleZone: true, cool: true, zoneWaterTemperature: [true, false] },
     }),
+    new FakeDehumidifier({ host: '192.0.2.16', state: { pumpEnabled: true } }),
   ];
 }
 
@@ -102,4 +111,4 @@ export async function createAll(world) {
   await world.hub.idle();
 }
 
-export { CAPS, FakeHeatPump, FakeMidea };
+export { CAPS, FakeDehumidifier, FakeHeatPump, FakeMidea };

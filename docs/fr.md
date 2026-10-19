@@ -16,7 +16,9 @@ Midea fabrique pour de nombreuses marques ; les climatiseurs de marques liées c
 
 Les **pompes à chaleur air/eau** (type d'appareil Midea `0xC3`, le « Heat Pump Wi-Fi Controller » d'une pompe à chaleur hydraulique, par exemple le modèle 171H120F) sont aussi prises en charge : zones de chauffage, eau chaude sanitaire, modes éco et silencieux, températures d'eau et extérieure. Elles apparaissent dans l'onglet Découverte comme les climatiseurs.
 
-Non pris en charge : les autres appareils Midea (déshumidificateurs, chauffe-eau...), que la recherche signale « non pris en charge », et les tout premiers modules Wi-Fi (protocole V1, vers 2015).
+Les **déshumidificateurs** (type d'appareil Midea `0xA1` : Midea, Comfee, Inventor... configurés dans l'application SmartHome / MSmartHome) sont aussi pris en charge.
+
+Non pris en charge : les autres appareils Midea (chauffe-eau, ventilateurs...), que la recherche signale « non pris en charge », et les tout premiers modules Wi-Fi (protocole V1, vers 2015).
 
 ## Prérequis
 
@@ -87,6 +89,23 @@ Une pompe à chaleur (type `0xC3`) est un appareil Gladys à part, nommé « Pom
 
 L'appoint électrique du ballon, l'eau chaude rapide et la désinfection anti-légionellose restent entre les mains de l'appareil et de sa commande. Le widget « Appareil Midea » a une vue pompe à chaleur (voir Widget) ; l'action de scène « Lancer la climatisation » est réservée aux climatiseurs ; le déclencheur « Erreur du climatiseur » fonctionne aussi pour les pompes à chaleur. La prise en charge des pompes à chaleur a été écrite d'après le code de midea-local et attend des retours sur de vrais appareils.
 
+### Déshumidificateurs
+
+Un déshumidificateur (type `0xA1`) est un appareil Gladys à part, nommé « Déshumidificateur » suivi des quatre derniers caractères de son nom Wi-Fi. Gladys n'a pas de catégorie déshumidificateur : le mode, la vitesse de ventilation et l'humidité cible sont des listes de choix, comme sur l'intégration Tuya.
+
+| Fonctionnalité                                     | Ce qu'elle fait                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Marche/arrêt**                                   | Allume ou éteint le déshumidificateur.                                       |
+| **Mode**                                           | Consigne, Continu, Auto, Séchage du linge, Séchage des chaussures.           |
+| **Vitesse de ventilation**                         | Très basse, Basse, Moyenne, Haute, Auto.                                     |
+| **Humidité cible**                                 | 35 à 85 %, par pas de 5 (la consigne du mode « Consigne »).                  |
+| **Humidité**, **Température**                      | Mesurées par l'appareil.                                                     |
+| **Niveau du réservoir**, **Réservoir plein**       | Le niveau du réservoir (%) et s'il a atteint le niveau réglé sur l'appareil. |
+| **Sécurité enfant**, **Ioniseur**, **Oscillation** | Les options de l'appareil.                                                   |
+| **Pompe de vidange**                               | Seulement sur un appareil qui en a une.                                      |
+
+Le déclencheur « Filtre à nettoyer » fonctionne aussi pour les déshumidificateurs. L'action de scène « Lancer la climatisation » et le widget sont réservés aux climatiseurs. La prise en charge des déshumidificateurs a été écrite d'après le code de midea-local et attend des retours sur de vrais appareils.
+
 ## Widget
 
 Le widget **Appareil Midea** (choisissez l'appareil dans ses réglages) s'adapte au type d'appareil. Pour un climatiseur, il montre la température de la pièce, la consigne et la température extérieure (ou l'humidité), puis le mode, la ventilation, l'état du filtre et le code erreur de l'appareil. Ses boutons :
@@ -141,7 +160,7 @@ Pour éteindre le climatiseur, ou changer un seul réglage, utilisez l'action st
 ## Limites
 
 - Développée sans le matériel : vos retours sont les bienvenus sur [GitHub](https://github.com/guim31/gladys-midea/issues).
-- Climatiseurs et pompes à chaleur air/eau seulement : les déshumidificateurs et autres appareils Midea ne sont pas encore pris en charge.
+- Climatiseurs, pompes à chaleur air/eau et déshumidificateurs seulement : les autres appareils Midea ne sont pas encore pris en charge.
 - Les positions des volets, l'afficheur (LED) et les préréglages avancés (breeze, iECO, air frais...) ne sont pas gérés.
 - Les modules de première génération (V1) ne sont pas pris en charge.
 - Gladys affiche la consigne par degré entier sur certains écrans ; l'appareil, lui, accepte les demi-degrés.

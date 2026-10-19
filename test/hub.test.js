@@ -25,8 +25,8 @@ const record = (world, unit) => world.hub.records.get(unit.id);
 
 test('discovery: one device per air conditioner, other appliances reported', async (t) => {
   const ac = new FakeMidea({ host: '192.0.2.10' });
-  const dehumidifier = new FakeMidea({ host: '192.0.2.20', type: 0xa1 });
-  const world = await createWorld({ units: [ac, dehumidifier] });
+  const hood = new FakeMidea({ host: '192.0.2.20', type: 0xb6 });
+  const world = await createWorld({ units: [ac, hood] });
   t.after(() => world.app.stop());
   assert.deepEqual(
     world.fake.discoveredDevices.map((device) => device.external_id),
@@ -37,7 +37,7 @@ test('discovery: one device per air conditioner, other appliances reported', asy
     { name: 'IP_ADDRESS', value: '192.0.2.10' },
     { name: 'PROTOCOL', value: 'V2' },
   ]);
-  assert.deepEqual(world.hub.summary().unsupported, [{ type: '0xA1', host: '192.0.2.20' }]);
+  assert.deepEqual(world.hub.summary().unsupported, [{ type: '0xB6', host: '192.0.2.20' }]);
   assert.equal(world.fake.connectionStatus.connected, true);
 });
 

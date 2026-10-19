@@ -26,6 +26,12 @@ the notes of the version's GitHub Release.
   since the counters started; buttons for zone 1 on/off and setpoint, and a
   form for the mode, the hot water, its setpoint and eco mode (the zone and
   the hot water in one frame).
+- Dehumidifiers (Midea appliance type `0xA1`: Midea, Comfee, Inventor...),
+  ported from midea-local: one Gladys device per unit with on/off, mode,
+  fan speed and target humidity (selection lists, as on the Tuya
+  integration), humidity, temperature, water tank level and tank full, child
+  lock, ionizer, swing and the drain pump when the unit has one. The "Filter
+  needs cleaning" trigger covers them; `scripts/probe.mjs --host` reads them.
 
 ## [1.1.0] - 2026-10-19
 
@@ -53,6 +59,7 @@ the notes of the version's GitHub Release.
 ### Changed
 
 - The search report counts "Midea units" rather than air conditioners.
+- The search no longer reports dehumidifiers (0xA1) as "not supported".
 
 ## [1.0.1] - 2026-10-13
 

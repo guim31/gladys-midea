@@ -37,11 +37,13 @@ src/app.js                        registers every handler on the SDK (or its fak
 src/hub.js                        discovery, V3 keys, own polling timer, states, commands, triggers
 src/devices.js                    the Gladys device of an air conditioner: features, names (4 languages), values, commands
 src/heatpump.js                   the Gladys device of a heat pump (0xC3): zones, hot water, sensors, commands
+src/dehumidifier.js               the Gladys device of a dehumidifier (0xA1): selects, sensors, commands
 src/midea/security.js             AES (V2 fixed key, V3 session key), MD5 signature, udpid
 src/midea/packet.js               V2 packets (0x5A5A) and V3 "8370" envelopes
 src/midea/frame.js                AA command frames, CRC-8, checksum
 src/midea/ac.js                   air conditioner (0xAC) commands and responses
 src/midea/c3.js                   air-to-water heat pump (0xC3) frames, after midea-local (no id, no CRC-8)
+src/midea/a1.js                   dehumidifier (0xA1) commands and state, after midea-local (AC frames)
 src/midea/discovery.js            discovery request and reply parsing
 src/midea/udp.js                  unicast discovery of a typed address
 src/midea/lan.js                  one TCP session per unit (V3 handshake, retries, serialized requests)
@@ -59,6 +61,7 @@ docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same 
 scripts/probe.mjs                 read-only probe of the real cloud and of a real unit
 test/fixtures/msmart-vectors.json packets, commands and decodings produced by msmart-ng itself
 test/fixtures/midea-local-c3-vectors.json heat pump frames and decodings produced by midea-local itself
+test/fixtures/midea-local-a1-vectors.json dehumidifier frames and decodings produced by midea-local itself
 test/helpers/fakeMidea.js         fake units (V2/V3, air conditioners and heat pumps) on a fake network, fake cloud
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
@@ -299,5 +302,10 @@ transport }` ; l'ack d'une action donne `data.message`, celui d'un widget `data.
   (`onUnsolicited` de `lan.js`). Vecteurs : `test/fixtures/midea-local-c3-vectors.json`, produits en
   exécutant midea-local (le générateur vit hors du dépôt). Appoint du ballon, eau chaude rapide et
   désinfection ne sont pas exposés, par prudence.
+- **Déshumidificateurs (0xA1)** : portés de midea-local (`devices/a1`). Trames de la clim (id de message et
+  CRC-8), query 0x41 et set 0x48 qui porte tout l'état ; le bit « pompe présente » est renvoyé tel quel
+  dans chaque set. Gladys n'a pas de catégorie déshumidificateur : mode, ventilation et humidité cible en
+  `text/select` (valeurs texte figées : `manual`, `continuous`…), comme l'intégration Tuya. Le hub
+  aiguille par `KINDS` (ids, noms, appareil, fonctionnalités, valeurs) selon `record.type`.
 - **Session de code** : le proxy refuse `mapp.appsmb.com`, et le `fetch` de Node n'utilise pas
   `HTTPS_PROXY` : le cloud se vérifie avec `scripts/probe.mjs` depuis une machine qui a le réseau.

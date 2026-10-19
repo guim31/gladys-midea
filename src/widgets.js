@@ -27,7 +27,7 @@ import {
   supportedFanSpeeds,
   supportedModes,
 } from './devices.js';
-import { WIDGET_KEY, isHeatPump } from './hub.js';
+import { WIDGET_KEY, isAirConditioner, isHeatPump } from './hub.js';
 import { heatPumpAction, heatPumpContent } from './widgetHeatPump.js';
 
 export const ACTIONS = {
@@ -49,6 +49,12 @@ export const TEXT = {
     fr: 'Cet appareil est inconnu : lancez une recherche dans l’intégration.',
     de: 'Dieses Gerät ist noch unbekannt: Starte eine Suche in der Integration.',
     es: 'Este equipo aún no es conocido: inicie una búsqueda en la integración.',
+  },
+  notAirConditioner: {
+    en: 'This widget has no view for this kind of unit yet: use its device box.',
+    fr: 'Ce widget n’a pas encore de vue pour ce type d’appareil : utilisez sa boîte d’appareil.',
+    de: 'Dieses Widget hat noch keine Ansicht für diese Geräteart: Nutze seine Gerätebox.',
+    es: 'Este widget aún no tiene vista para este tipo de equipo: use su caja de dispositivo.',
   },
   room: { en: 'Room', fr: 'Pièce', de: 'Raum', es: 'Estancia' },
   setpoint: { en: 'Setpoint', fr: 'Consigne', de: 'Sollwert', es: 'Consigna' },
@@ -106,6 +112,9 @@ function message(text, language) {
 
 async function get(hub, { settings, language = 'en' }) {
   const record = settings?.device ? hub.resolveDevice(settings.device) : null;
+  if (record && !isAirConditioner(record) && !isHeatPump(record)) {
+    return message(TEXT.notAirConditioner, language);
+  }
   if (!record?.capsQueried) {
     return message(settings?.device ? TEXT.unknown : TEXT.pick, language);
   }
@@ -243,6 +252,9 @@ async function action(hub, { actionKey, values, settings }) {
   const record = hub.require(device);
   if (isHeatPump(record)) {
     return heatPumpAction(hub, record, { actionKey, values, device });
+  }
+  if (!isAirConditioner(record)) {
+    throw new Error(TEXT.notAirConditioner.en);
   }
   if (actionKey === ACTIONS.POWER) {
     const state = await hub.currentState(record);

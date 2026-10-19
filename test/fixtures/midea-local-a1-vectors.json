@@ -1,0 +1,123 @@
+{
+  "source": "midea-local (midea-lan 2026.9.2) devices/a1/message.py, run on fixed inputs",
+  "queries": [
+    {
+      "id": 7,
+      "frame": "aa20a100000000000003418100ff000000000000000000000000000000000776fe"
+    }
+  ],
+  "sets": [
+    {
+      "id": 8,
+      "input": {
+        "power": true,
+        "prompt_tone": false,
+        "mode": 3,
+        "fan_speed": 60,
+        "child_lock": false,
+        "target_humidity": 55,
+        "swing": true,
+        "anion": false,
+        "pump": false,
+        "pump_enable": false,
+        "water_level_set": 50
+      },
+      "frame": "aa21a1000000000000024803033c00000037000008000032000000000000000872c7"
+    },
+    {
+      "id": 9,
+      "input": {
+        "power": false,
+        "prompt_tone": true,
+        "mode": 1,
+        "fan_speed": 40,
+        "child_lock": true,
+        "target_humidity": 40,
+        "swing": false,
+        "anion": true,
+        "pump": true,
+        "pump_enable": true,
+        "water_level_set": 100
+      },
+      "frame": "aa21a100000000000002484201280000002880580000006400000000000000092eee"
+    }
+  ],
+  "responses": [
+    {
+      "frame": "aa24a100000000000003c801033c0000003700001e00000000323e5c00200000000005f6f4",
+      "attrs": {
+        "power": true,
+        "mode": 3,
+        "fan_speed": 60,
+        "target_humidity": 55,
+        "child_lock": false,
+        "anion": false,
+        "pump": false,
+        "pump_enable": false,
+        "tank": 30,
+        "water_level_set": 50,
+        "current_humidity": 62,
+        "current_temperature": 21.0,
+        "swing": true,
+        "filter_cleaning_reminder": false
+      }
+    },
+    {
+      "frame": "aa24a100000000000002c80004020000001480d83c00000000323e290000000000000554d1",
+      "attrs": {
+        "power": false,
+        "mode": 4,
+        "fan_speed": 1,
+        "target_humidity": 35,
+        "child_lock": true,
+        "anion": true,
+        "pump": true,
+        "pump_enable": true,
+        "tank": 60,
+        "water_level_set": 50,
+        "current_humidity": 62,
+        "current_temperature": -4.5,
+        "swing": false,
+        "filter_cleaning_reminder": true
+      }
+    },
+    {
+      "frame": "aa24a100000000000004c801033c0000003700001e00000000323e5c00200000000005f6f3",
+      "attrs": {
+        "power": true,
+        "mode": 3,
+        "fan_speed": 60,
+        "target_humidity": 55,
+        "child_lock": false,
+        "anion": false,
+        "pump": false,
+        "pump_enable": false,
+        "tank": 30,
+        "water_level_set": 50,
+        "current_humidity": 62,
+        "current_temperature": 21.0,
+        "swing": true,
+        "filter_cleaning_reminder": false
+      }
+    },
+    {
+      "frame": "aa24a100000000000005a001033c0000003700001e00000000323e5c00200000000005838d",
+      "attrs": {
+        "power": true,
+        "mode": 3,
+        "fan_speed": 60,
+        "target_humidity": 55,
+        "child_lock": false,
+        "anion": false,
+        "pump": false,
+        "pump_enable": false,
+        "tank": 30,
+        "water_level_set": 50,
+        "current_humidity": 62,
+        "current_temperature": 21.0,
+        "swing": true,
+        "filter_cleaning_reminder": false
+      }
+    }
+  ]
+}

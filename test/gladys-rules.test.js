@@ -101,6 +101,18 @@ for (const scenario of scenarios) {
             const values = feature.supported_options.map((option) => option.value);
             assert.equal(new Set(values).size, values.length, `${at}: duplicate option value`);
             for (const option of feature.supported_options) {
+              if (feature.category === 'text' && feature.type === 'select') {
+                // A dynamic select: string values only (normalizeSupportedOptions).
+                assert.ok(
+                  typeof option.value === 'string' && option.value.trim(),
+                  `${at}: a select option value must be a non-empty string`,
+                );
+                assert.ok(
+                  typeof option.label === 'string' && option.label.trim(),
+                  `${at}: option label`,
+                );
+                continue;
+              }
               assert.ok(Number.isInteger(option.value), `${at}: option value must be an integer`);
               assert.ok(
                 option.value >= feature.min && option.value <= feature.max,
@@ -151,6 +163,12 @@ test('the published states fit the features they target', async () => {
         // A text state carries `text`, never empty, and no number.
         assert.ok(typeof state.text === 'string' && state.text.trim(), `${feature.name}: text`);
         assert.equal(state.state, undefined);
+        if (feature.supported_options) {
+          assert.ok(
+            feature.supported_options.some((option) => option.value === state.text),
+            `${feature.name}: ${state.text} is not an offered option`,
+          );
+        }
         continue;
       }
       assert.equal(typeof state.state, 'number');
