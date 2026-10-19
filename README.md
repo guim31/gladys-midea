@@ -14,7 +14,7 @@ This project is not affiliated with Midea.
 - **V2 and V3 units**: the units sold since about 2020 (V3) need a token and a key, fetched **once** from the Midea cloud (public NetHome Plus accounts by region, as msmart-ng does, or your own account), then kept in the integration volume (`/data`). Everything else is local.
 - **Refresh**: the integration reads every unit itself, every 30 seconds by default, and sends Gladys only what changed.
 - **Scenes**: triggers "Filter needs cleaning" and "Unit error" (with the error code); action "Run the air conditioner" (mode, setpoint and fan in one command).
-- **Widget** "Air conditioner": room, setpoint and outdoor temperature, mode, fan, filter, error code; on/off, setpoint and "Mode and fan" buttons.
+- **Widget** "Midea unit", one view per kind of unit: for an air conditioner, room, setpoint and outdoor temperature, mode, fan, filter, error code, with on/off, setpoint and "Mode and fan" buttons; for a heat pump, zone 1 setpoint, tank and outdoor temperature, what runs, power draw and COP, with zone 1 on/off, setpoint and "Settings" buttons.
 - **Diagnostics**: "Diagnostic of the units" and "Test a unit" build a read-only text report to paste into a GitHub issue (secrets never shown, identifiers masked by default); the test of a typed address tells which Midea appliance answers there.
 - English, French, German and Spanish.
 

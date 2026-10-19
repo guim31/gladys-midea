@@ -85,15 +85,21 @@ Une pompe à chaleur (type `0xC3`) est un appareil Gladys à part, nommé « Pom
 | **Puissance consommée**                                                                     | La puissance instantanée (W), quand l'appareil la donne.                                                                                                                                                                                                                    |
 | **Énergie consommée**, **Chaleur produite (kWh)**                                           | L'électricité consommée et la chaleur produite au total (kWh) : elles apparaissent dès que l'appareil a envoyé ses compteurs. Leur rapport donne le rendement saisonnier (COP). La chaleur est un simple compteur, pour que Gladys ne la compte pas comme de l'électricité. |
 
-L'appoint électrique du ballon, l'eau chaude rapide et la désinfection anti-légionellose restent entre les mains de l'appareil et de sa commande. Le widget « Climatiseur » et l'action de scène « Lancer la climatisation » sont réservés aux climatiseurs ; le déclencheur « Erreur du climatiseur » fonctionne aussi pour les pompes à chaleur. La prise en charge des pompes à chaleur a été écrite d'après le code de midea-local et attend des retours sur de vrais appareils.
+L'appoint électrique du ballon, l'eau chaude rapide et la désinfection anti-légionellose restent entre les mains de l'appareil et de sa commande. Le widget « Appareil Midea » a une vue pompe à chaleur (voir Widget) ; l'action de scène « Lancer la climatisation » est réservée aux climatiseurs ; le déclencheur « Erreur du climatiseur » fonctionne aussi pour les pompes à chaleur. La prise en charge des pompes à chaleur a été écrite d'après le code de midea-local et attend des retours sur de vrais appareils.
 
 ## Widget
 
-Le widget **Climatiseur** (choisissez l'appareil dans ses réglages) montre la température de la pièce, la consigne et la température extérieure (ou l'humidité), puis le mode, la ventilation, l'état du filtre et le code erreur de l'appareil. Ses boutons :
+Le widget **Appareil Midea** (choisissez l'appareil dans ses réglages) s'adapte au type d'appareil. Pour un climatiseur, il montre la température de la pièce, la consigne et la température extérieure (ou l'humidité), puis le mode, la ventilation, l'état du filtre et le code erreur de l'appareil. Ses boutons :
 
 - **Allumer** / **Éteindre** ;
 - **−0,5 °C** et **+0,5 °C** (par 1 °C sur les appareils qui n'acceptent pas les demi-degrés) ;
 - **Mode et ventilation** : un petit formulaire pour choisir ensemble le mode et la vitesse de ventilation ; le climatiseur est allumé.
+
+Pour une **pompe à chaleur**, il montre la consigne de la zone 1, la température du ballon et la température extérieure, puis ce qui fonctionne en ce moment : chaque zone (mode, chauffe ou repos), l'eau chaude (marche, consigne, chauffe), le compresseur (avec dégivrage et appoint électrique), la puissance consommée, le rendement depuis le début des compteurs (**COP (total)** : chaleur produite divisée par l'électricité consommée) et le code erreur. Ses boutons :
+
+- **Allumer zone 1** / **Éteindre zone 1** : la zone 1 repart dans le mode de fonctionnement de l'appareil ;
+- **−1 °C** et **+1 °C** sur la consigne de la zone 1 (par demi-degré pour une zone pilotée par un thermostat d'ambiance), dans les limites annoncées par l'appareil ;
+- **Réglages** : un petit formulaire pour le mode de la zone 1, l'eau chaude et sa consigne, et le mode éco (le mode silencieux aussi sur un appareil sans eau chaude). La zone et l'eau chaude partent dans une seule trame.
 
 ## Déclencheurs de scène
 

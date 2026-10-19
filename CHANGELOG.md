@@ -19,6 +19,13 @@ the notes of the version's GitHub Release.
   and decoding. A typed address of an appliance not supported yet gets its
   discovery answer. Tokens, keys and passwords are never shown; ids, serial
   numbers and local addresses are masked unless asked.
+- Widget "Midea unit" (key `climate`, formerly "Air conditioner"): a heat pump
+  view beside the air conditioner's, chosen from the kind of the unit. It shows
+  zone 1's setpoint, tank and outdoor temperatures, what runs (each zone, hot
+  water, compressor, defrosting, backup heater), the power draw and the COP
+  since the counters started; buttons for zone 1 on/off and setpoint, and a
+  form for the mode, the hot water, its setpoint and eco mode (the zone and
+  the hot water in one frame).
 
 ## [1.1.0] - 2026-10-19
 

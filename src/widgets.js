@@ -1,7 +1,10 @@
 // -----------------------------------------------------------------------------
-// Dashboard widget (manifest `widgets`): `climate`, one air conditioner.
+// Dashboard widget (manifest `widgets`): `climate`, one Midea unit. The view
+// follows the kind of the unit: the air conditioner's below, the heat pump's
+// in src/widgetHeatPump.js; another Midea appliance gets a view of its own
+// beside them, under the same widget key.
 //
-// What it adds to the Gladys device box: the room and the setpoint side by
+// Air conditioner: what it adds to the Gladys device box: the room and the setpoint side by
 // side, the mode, the fan, the filter and the error code of the unit at a
 // glance, and one-tap buttons: on/off, setpoint down/up, and a small form
 // (Gladys 5.2+, #3168) to change mode and fan speed together.
@@ -25,6 +28,7 @@ import {
   supportedModes,
 } from './devices.js';
 import { WIDGET_KEY, isHeatPump } from './hub.js';
+import { heatPumpAction, heatPumpContent } from './widgetHeatPump.js';
 
 export const ACTIONS = {
   POWER: 'power',
@@ -35,22 +39,16 @@ export const ACTIONS = {
 
 export const TEXT = {
   pick: {
-    en: 'Choose an air conditioner in the settings of this widget.',
-    fr: 'Choisissez un climatiseur dans les réglages de ce widget.',
-    de: 'Wähle in den Einstellungen dieses Widgets eine Klimaanlage aus.',
-    es: 'Elija un aire acondicionado en la configuración de este widget.',
+    en: 'Choose a Midea unit in the settings of this widget.',
+    fr: 'Choisissez un appareil Midea dans les réglages de ce widget.',
+    de: 'Wähle in den Einstellungen dieses Widgets ein Midea-Gerät aus.',
+    es: 'Elija un equipo Midea en la configuración de este widget.',
   },
   unknown: {
-    en: 'This air conditioner is not known yet: run a search in the integration.',
-    fr: 'Ce climatiseur est inconnu : lancez une recherche dans l’intégration.',
-    de: 'Diese Klimaanlage ist noch unbekannt: Starte eine Suche in der Integration.',
-    es: 'Este aire acondicionado aún no es conocido: inicie una búsqueda en la integración.',
-  },
-  heatPump: {
-    en: 'This widget is for air conditioners: add the heat pump with its device box.',
-    fr: 'Ce widget est fait pour les climatiseurs : ajoutez la pompe à chaleur par sa boîte d’appareil.',
-    de: 'Dieses Widget ist für Klimaanlagen: Füge die Wärmepumpe über ihre Gerätebox hinzu.',
-    es: 'Este widget es para aires acondicionados: añada la bomba de calor con su caja de dispositivo.',
+    en: 'This unit is not known yet: run a search in the integration.',
+    fr: 'Cet appareil est inconnu : lancez une recherche dans l’intégration.',
+    de: 'Dieses Gerät ist noch unbekannt: Starte eine Suche in der Integration.',
+    es: 'Este equipo aún no es conocido: inicie una búsqueda en la integración.',
   },
   room: { en: 'Room', fr: 'Pièce', de: 'Raum', es: 'Estancia' },
   setpoint: { en: 'Setpoint', fr: 'Consigne', de: 'Sollwert', es: 'Consigna' },
@@ -108,11 +106,11 @@ function message(text, language) {
 
 async function get(hub, { settings, language = 'en' }) {
   const record = settings?.device ? hub.resolveDevice(settings.device) : null;
-  if (record && isHeatPump(record)) {
-    return message(TEXT.heatPump, language);
-  }
   if (!record?.capsQueried) {
     return message(settings?.device ? TEXT.unknown : TEXT.pick, language);
+  }
+  if (isHeatPump(record)) {
+    return heatPumpContent(hub, record, language);
   }
   const lang = NAMES[language] ? language : 'en';
   const { caps, state } = record;
@@ -244,7 +242,7 @@ async function action(hub, { actionKey, values, settings }) {
   }
   const record = hub.require(device);
   if (isHeatPump(record)) {
-    throw new Error(TEXT.heatPump.en);
+    return heatPumpAction(hub, record, { actionKey, values, device });
   }
   if (actionKey === ACTIONS.POWER) {
     const state = await hub.currentState(record);

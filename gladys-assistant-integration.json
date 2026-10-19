@@ -767,16 +767,16 @@
     {
       "key": "climate",
       "label": {
-        "en": "Air conditioner",
-        "fr": "Climatiseur",
-        "de": "Klimaanlage",
-        "es": "Aire acondicionado"
+        "en": "Midea unit",
+        "fr": "Appareil Midea",
+        "de": "Midea-Gerät",
+        "es": "Equipo Midea"
       },
       "description": {
-        "en": "Room and setpoint, mode, fan, filter; on/off, setpoint and mode buttons.",
-        "fr": "Pièce et consigne, mode, ventilation, filtre ; boutons marche, consigne et mode.",
-        "de": "Raum und Sollwert, Modus, Lüfter, Filter; Tasten für Ein/Aus, Sollwert und Modus.",
-        "es": "Estancia y consigna, modo, ventilador, filtro; botones de encendido, consigna y modo."
+        "en": "Air conditioner or heat pump: temperatures, what runs, on/off, setpoint and settings buttons.",
+        "fr": "Climatiseur ou pompe à chaleur : températures, fonctionnement, boutons marche, consigne et réglages.",
+        "de": "Klimaanlage oder Wärmepumpe: Temperaturen, Betrieb, Tasten für Ein/Aus, Sollwert und Einstellungen.",
+        "es": "Aire acondicionado o bomba de calor: temperaturas, estado, botones de marcha, consigna y ajustes."
       },
       "icon": "thermometer",
       "settings": [
@@ -786,10 +786,10 @@
           "source": "devices",
           "required": true,
           "label": {
-            "en": "Air conditioner",
-            "fr": "Climatiseur",
-            "de": "Klimaanlage",
-            "es": "Aire acondicionado"
+            "en": "Unit",
+            "fr": "Appareil",
+            "de": "Gerät",
+            "es": "Equipo"
           }
         }
       ],

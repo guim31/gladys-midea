@@ -85,15 +85,21 @@ Una bomba de calor (tipo `0xC3`) es un dispositivo de Gladys propio, llamado «B
 | **Potencia consumida**                                                                          | La potencia instantánea (W), cuando el equipo la da.                                                                                                                                                                                                   |
 | **Energía consumida**, **Calor producido (kWh)**                                                | La electricidad consumida y el calor producido en total (kWh): aparecen en cuanto el equipo ha enviado sus contadores. Su relación da el rendimiento estacional (COP). El calor es un simple contador, para que Gladys no lo cuente como electricidad. |
 
-La resistencia de apoyo del depósito, el agua caliente rápida y la desinfección antilegionela quedan en manos del equipo y de su mando. El widget «Aire acondicionado» y la acción de escena «Poner en marcha el aire» son solo para aires acondicionados; el disparador «Error del equipo» funciona también para las bombas de calor. La compatibilidad con las bombas de calor se escribió a partir del código de midea-local y espera comentarios sobre equipos reales.
+La resistencia de apoyo del depósito, el agua caliente rápida y la desinfección antilegionela quedan en manos del equipo y de su mando. El widget «Equipo Midea» tiene una vista de bomba de calor (véase Widget); la acción de escena «Poner en marcha el aire» es solo para aires acondicionados; el disparador «Error del equipo» funciona también para las bombas de calor. La compatibilidad con las bombas de calor se escribió a partir del código de midea-local y espera comentarios sobre equipos reales.
 
 ## Widget
 
-El widget **Aire acondicionado** (elija el equipo en su configuración) muestra la temperatura de la estancia, la consigna y la temperatura exterior (o la humedad), y después el modo, el ventilador, el estado del filtro y el código de error del equipo. Sus botones:
+El widget **Equipo Midea** (elija el equipo en su configuración) se adapta al tipo de equipo. Para un aire acondicionado, muestra la temperatura de la estancia, la consigna y la temperatura exterior (o la humedad), y después el modo, el ventilador, el estado del filtro y el código de error del equipo. Sus botones:
 
 - **Encender** / **Apagar**;
 - **−0,5 °C** y **+0,5 °C** (de 1 °C en 1 °C en los equipos que no aceptan medios grados);
 - **Modo y ventilador**: un pequeño formulario para elegir a la vez el modo y la velocidad del ventilador; el equipo se enciende.
+
+Para una **bomba de calor**, muestra la consigna de la zona 1, la temperatura del depósito y la temperatura exterior, y luego lo que funciona en este momento: cada zona (modo, calentando o reposo), el agua caliente (encendida, consigna, calentamiento), el compresor (con desescarche y apoyo eléctrico), la potencia consumida, el rendimiento desde el inicio de los contadores (**COP (total)**: calor producido dividido por la electricidad consumida) y el código de error. Sus botones:
+
+- **Encender zona 1** / **Apagar zona 1**: la zona 1 vuelve a arrancar en el modo de funcionamiento del equipo;
+- **−1 °C** y **+1 °C** sobre la consigna de la zona 1 (por medios grados para una zona con termostato de ambiente), dentro de los límites que anuncia el equipo;
+- **Ajustes**: un pequeño formulario para el modo de la zona 1, el agua caliente y su consigna, y el modo eco (también el modo silencioso en un equipo sin agua caliente). La zona y el agua caliente se envían en una sola trama.
 
 ## Disparadores de escena
 

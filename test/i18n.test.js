@@ -13,6 +13,7 @@ import { FEATURE_KEYS, NAMES } from '../src/devices.js';
 import { HP_KEYS, HP_NAMES } from '../src/heatpump.js';
 import { CONNECTION_TEXT, INIT_FAILED, SEARCH_TEXT, searchMessage } from '../src/texts.js';
 import { TEXT } from '../src/widgets.js';
+import { HP_TEXT } from '../src/widgetHeatPump.js';
 
 const manifest = JSON.parse(
   await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
@@ -130,6 +131,9 @@ test('every message table of the code has the four languages', () => {
     ),
     ...Object.entries(TEXT).flatMap(([key, value]) =>
       problems(value, `TEXT.${key}`, longMessages.has(key) ? MAX.message : MAX.short),
+    ),
+    ...Object.entries(HP_TEXT).flatMap(([key, value]) =>
+      problems(value, `HP_TEXT.${key}`, MAX.short),
     ),
   ];
   assert.deepEqual(found, []);

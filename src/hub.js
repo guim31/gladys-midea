@@ -1266,6 +1266,36 @@ export class MideaHub {
     await this.applyReading(record, state ?? assumed);
   }
 
+  /**
+   * Several heat pump settings at once (widget form): `[[featureKey, value]]`
+   * in Gladys values. The zones, the hot water and the setpoints travel in
+   * one basic frame; eco and silent mode have frames of their own.
+   */
+  async applyHeatPumpSettings(deviceExternalId, changes) {
+    const record = this.require(deviceExternalId);
+    if (!isHeatPump(record)) {
+      throw new Error(`${this.label(record)} is not a heat pump`);
+    }
+    await this.currentState(record);
+    let basic = null;
+    const others = [];
+    for (const [key, value] of changes) {
+      const command = heatPumpCommand({ ...record, state: basic ?? record.state }, key, value);
+      if (command.basic) {
+        basic = command.basic;
+      } else {
+        others.push(command);
+      }
+    }
+    if (basic) {
+      await this.sendHeatPump(record, { basic });
+    }
+    for (const command of others) {
+      await this.sendHeatPump(record, command);
+    }
+    return record;
+  }
+
   /** A Gladys command on a feature of one of the units. */
   async setValue(device, feature, value) {
     const record = this.require(device?.external_id);

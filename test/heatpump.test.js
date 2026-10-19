@@ -564,12 +564,10 @@ test('triggers: a new error code of the heat pump fires the unit error', async (
   assert.equal(world.fake.lastState(ids(world, pump).feature(HP_KEYS.ERROR)), 'E8');
 });
 
-test('the air conditioner widget and scene action say they are not for a heat pump', async (t) => {
+test('the air conditioner scene action refuses a heat pump', async (t) => {
   const pump = new FakeHeatPump({ host: '192.0.2.40' });
   const world = await createdWorld(t, { units: [pump] });
   const device = ids(world, pump).device;
-  const widget = await world.fake.widgetGet('climate', { settings: { device }, language: 'fr' });
-  assert.match(widget.data.content.components[0].text, /pompe à chaleur/);
   const ack = await world.fake.sceneAction('set_climate', { device, mode: '2' });
   assert.equal(ack.success, false);
   assert.equal(pump.frames.filter((frame) => frame[9] === MESSAGE_TYPE.SET).length, 0);
