@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-19
+
 ### Added
 
 - Air-to-water heat pumps (Midea appliance type `0xC3`, "Heat Pump Wi-Fi
@@ -64,5 +66,6 @@ the notes of the version's GitHub Release.
   "Mode and fan" buttons.
 - Names, messages and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-midea/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/guim31/gladys-midea/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/guim31/gladys-midea/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/guim31/gladys-midea/releases/tag/v1.0.1
