@@ -85,15 +85,21 @@ A heat pump (type `0xC3`) is a Gladys device of its own, named "Heat pump" follo
 | **Power draw**                                                                     | The instant power (W), when the unit gives it.                                                                                                                                                                                         |
 | **Energy consumed**, **Heat produced (kWh)**                                       | Total electricity consumed and total heat produced (kWh): they appear once the unit has sent its counters. Their ratio is the seasonal efficiency (COP). The heat is a plain counter, so that Gladys does not count it as electricity. |
 
-The tank booster heater, fast hot water and anti-legionella disinfection stay in the hands of the unit and its controller. The "Air conditioner" widget and the "Run the air conditioner" scene action are for air conditioners only; the "Unit error" trigger works for heat pumps too. Heat pump support was written from midea-local's code and is waiting for feedback on real units.
+The tank booster heater, fast hot water and anti-legionella disinfection stay in the hands of the unit and its controller. The "Midea unit" widget has a heat pump view (see Widget); the "Run the air conditioner" scene action is for air conditioners only; the "Unit error" trigger works for heat pumps too. Heat pump support was written from midea-local's code and is waiting for feedback on real units.
 
 ## Widget
 
-The **Air conditioner** widget (choose the unit in its settings) shows the room temperature, the setpoint and the outdoor temperature (or the humidity), then the mode, the fan speed, the filter state and the error code of the unit. Its buttons:
+The **Midea unit** widget (choose the unit in its settings) adapts to the kind of unit. For an air conditioner, it shows the room temperature, the setpoint and the outdoor temperature (or the humidity), then the mode, the fan speed, the filter state and the error code of the unit. Its buttons:
 
 - **Turn on** / **Turn off**;
 - **−0.5 °C** and **+0.5 °C** (by 1 °C on the units that do not take half degrees);
 - **Mode and fan**: a small form to choose the mode and the fan speed together; the unit is switched on.
+
+For a **heat pump**, it shows zone 1's setpoint, the tank temperature and the outdoor temperature, then what runs right now: each zone (mode, heating or idle), the hot water (on/off, setpoint, heating), the compressor (with defrosting and backup heater), the power draw, the efficiency since the counters started (**COP (total)**: heat produced divided by electricity consumed) and the error code. Its buttons:
+
+- **Zone 1 on** / **Zone 1 off**: zone 1 restarts in the unit's operating mode;
+- **−1 °C** and **+1 °C** on zone 1's setpoint (by half degrees for a zone run by a room thermostat), within the limits the unit announces;
+- **Settings**: a small form for zone 1's mode, the hot water and its setpoint, and eco mode (silent mode too on a unit without hot water). The zone and the hot water travel in a single frame.
 
 ## Scene triggers
 

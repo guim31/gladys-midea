@@ -51,7 +51,8 @@ src/problems.js                   repeated failures logged once, and their end o
 src/texts.js                      connection status and search report texts (4 languages)
 src/diagnostic.js                 actions `fleet_diagnostic` and `test_device`: reports, redaction
 src/scenes.js                     scene action `set_climate`
-src/widgets.js                    widget `climate`
+src/widgets.js                    widget `climate`: the view of each kind of unit (air conditioner here)
+src/widgetHeatPump.js             the heat pump view of the widget `climate`
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
 docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)

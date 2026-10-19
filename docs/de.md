@@ -85,15 +85,21 @@ Eine Wärmepumpe (Typ `0xC3`) ist ein eigenes Gladys-Gerät, benannt „Wärmepu
 | **Leistungsaufnahme**                                                             | Die momentane Leistung (W), wenn das Gerät sie liefert.                                                                                                                                                                               |
 | **Verbrauchte Energie**, **Erzeugte Wärme (kWh)**                                 | Insgesamt verbrauchter Strom und erzeugte Wärme (kWh), sobald das Gerät seine Zähler gesendet hat. Das Verhältnis beider ist die Jahresarbeitszahl (COP). Die Wärme ist ein einfacher Zähler, damit Gladys sie nicht als Strom zählt. |
 
-Der Zusatzheizstab des Speichers, das schnelle Warmwasser und die Legionellen-Desinfektion bleiben dem Gerät und seiner Steuerung überlassen. Das Widget „Klimaanlage“ und die Szenenaktion „Klimaanlage starten“ sind nur für Klimaanlagen; der Auslöser „Gerätefehler“ funktioniert auch für Wärmepumpen. Die Unterstützung der Wärmepumpen wurde nach dem Code von midea-local geschrieben und wartet auf Rückmeldungen von echten Geräten.
+Der Zusatzheizstab des Speichers, das schnelle Warmwasser und die Legionellen-Desinfektion bleiben dem Gerät und seiner Steuerung überlassen. Das Widget „Midea-Gerät“ hat eine Wärmepumpen-Ansicht (siehe Widget); die Szenenaktion „Klimaanlage starten“ ist nur für Klimaanlagen; der Auslöser „Gerätefehler“ funktioniert auch für Wärmepumpen. Die Unterstützung der Wärmepumpen wurde nach dem Code von midea-local geschrieben und wartet auf Rückmeldungen von echten Geräten.
 
 ## Widget
 
-Das Widget **Klimaanlage** (wähle das Gerät in seinen Einstellungen) zeigt die Raumtemperatur, den Sollwert und die Außentemperatur (oder die Feuchte), dann den Modus, den Lüfter, den Filterzustand und den Fehlercode des Geräts. Seine Tasten:
+Das Widget **Midea-Gerät** (wähle das Gerät in seinen Einstellungen) passt sich der Geräteart an. Bei einer Klimaanlage zeigt es die Raumtemperatur, den Sollwert und die Außentemperatur (oder die Feuchte), dann den Modus, den Lüfter, den Filterzustand und den Fehlercode des Geräts. Seine Tasten:
 
 - **Einschalten** / **Ausschalten**;
 - **−0,5 °C** und **+0,5 °C** (in 1-°C-Schritten bei Geräten ohne halbe Grad);
 - **Modus und Lüfter**: ein kleines Formular, um Modus und Lüfterstufe zusammen zu wählen; das Gerät wird eingeschaltet.
+
+Bei einer **Wärmepumpe** zeigt es den Sollwert von Zone 1, die Speicher- und die Außentemperatur, dann was gerade läuft: jede Zone (Modus, heizt oder Ruhe), das Warmwasser (ein/aus, Sollwert, Bereitung), den Verdichter (mit Abtauen und Zuheizer), die Leistungsaufnahme, den Wirkungsgrad seit Beginn der Zähler (**COP (gesamt)**: erzeugte Wärme geteilt durch verbrauchten Strom) und den Fehlercode. Seine Tasten:
+
+- **Zone 1 ein** / **Zone 1 aus**: Zone 1 startet wieder im Betriebsmodus des Geräts;
+- **−1 °C** und **+1 °C** auf den Sollwert von Zone 1 (in halben Grad bei einer Zone mit Raumthermostat), innerhalb der Grenzen, die das Gerät meldet;
+- **Einstellungen**: ein kleines Formular für den Modus von Zone 1, das Warmwasser und seinen Sollwert und den Eco-Modus (bei einem Gerät ohne Warmwasser auch den leisen Modus). Zone und Warmwasser gehen in einem einzigen Rahmen.
 
 ## Szenen-Auslöser
 
