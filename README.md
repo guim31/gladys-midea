@@ -12,7 +12,7 @@ This project is not affiliated with Midea.
 - **One Gladys device per unit**, with only the features and options the unit announces: on/off, mode (auto, cool, heat, dry, fan), setpoint by half degrees, fan speed, vertical and horizontal swing, indoor and outdoor temperature, indoor humidity, eco, turbo and sleep modes, power draw and energy consumed.
 - **Air-to-water heat pumps** (appliance type `0xC3`, "Heat Pump Wi-Fi Controller", e.g. 171H120F): mode, setpoint, operating state and weather curve of each heating zone, domestic hot water on/off, setpoint and heating, tank, outdoor and water temperatures, water flow and pressure, eco, silent and super silent modes, compressor, defrosting, backup heater, error code, power draw, energy consumed and heat produced. Ported from midea-local, waiting for feedback on real units.
 - **Dehumidifiers** (appliance type `0xA1`: Midea, Comfee, Inventor...): on/off, mode, fan speed and target humidity, humidity, temperature, water tank level and tank full, child lock, ionizer, swing, drain pump. Ported from midea-local, waiting for feedback on real units.
-- **V2 and V3 units**: the units sold since about 2020 (V3) need a token and a key, fetched **once** from the Midea cloud (public NetHome Plus accounts by region, as msmart-ng does, or your own account), then kept in the integration volume (`/data`). Everything else is local.
+- **V2 and V3 units**: the units sold since about 2020 (V3) need a token and a key, fetched **once** from the Midea cloud (public NetHome Plus and SmartHome accounts by region, as msmart-ng does, or your own account), then kept in the integration volume (`/data`). Everything else is local.
 - **Refresh**: the integration reads every unit itself, every 30 seconds by default, and sends Gladys only what changed.
 - **Scenes**: triggers "Filter needs cleaning" and "Unit error" (with the error code); action "Run the air conditioner" (mode, setpoint and fan in one command).
 - **Widget** "Midea unit", one view per kind of unit: for an air conditioner, room, setpoint and outdoor temperature, mode, fan, filter, error code, with on/off, setpoint and "Mode and fan" buttons; for a heat pump, zone 1 setpoint, tank and outdoor temperature, what runs, power draw and COP, with zone 1 on/off, setpoint and "Settings" buttons.
@@ -54,7 +54,7 @@ The tests never touch the network: `test/fixtures/msmart-vectors.json` holds pac
 
 ## Credits
 
-- [msmart-ng](https://github.com/mill1000/midea-msmart) by Tucker Kern and contributors (MIT): LAN packets, V3 handshake, air conditioner commands and responses, NetHome Plus cloud client, and the frames of its test suite used as fixtures.
+- [msmart-ng](https://github.com/mill1000/midea-msmart) by Tucker Kern and contributors (MIT): LAN packets, V3 handshake, air conditioner commands and responses, NetHome Plus and SmartHome cloud clients, and the frames of its test suite used as fixtures.
 - [midea-local](https://github.com/midea-lan/midea-local) by George Zhao, Wentao Wu and contributors (MIT), the library of the Home Assistant integration [midea_ac_lan](https://github.com/wuwentao/midea_ac_lan): discovery, V3 protocol, the heat pump (0xC3) frames, cross-checks.
 - The MIT notices of both projects are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), shipped in the image.
 - Built from the official [integration template](https://github.com/GladysAssistant/integration-template-js) of Gladys Assistant.

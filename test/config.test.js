@@ -11,7 +11,7 @@ test('defaults: French names, 30 s, public European account, no beep', () => {
     hosts: [],
     invalidHosts: [],
     pollSeconds: 30,
-    cloud: { region: 'DE', account: '', password: '' },
+    cloud: { app: 'nethome', region: 'DE', account: '', password: '' },
     manualKeys: [],
     energyFormat: 'bcd',
     beep: false,
@@ -28,14 +28,19 @@ test('typed addresses: separators, duplicates, leading zeros and garbage', () =>
 
 test('an own account needs both its e-mail and its password', () => {
   assert.deepEqual(normalizeConfig({ cloud_account: 'me@example.com' }).cloud, {
+    app: 'nethome',
     region: 'DE',
     account: '',
     password: '',
   });
   assert.deepEqual(
-    normalizeConfig({ cloud_account: ' me@example.com ', cloud_password: 'pw', cloud_region: 'US' })
-      .cloud,
-    { region: 'US', account: 'me@example.com', password: 'pw' },
+    normalizeConfig({
+      cloud_account: ' me@example.com ',
+      cloud_password: 'pw',
+      cloud_region: 'US',
+      cloud_app: 'smarthome',
+    }).cloud,
+    { app: 'smarthome', region: 'US', account: 'me@example.com', password: 'pw' },
   );
 });
 
@@ -43,12 +48,14 @@ test('unknown values fall back to the defaults', () => {
   const config = normalizeConfig({
     poll_interval: '7',
     cloud_region: 'XX',
+    cloud_app: 'msmart',
     energy_format: 'hex',
     language: 'it',
     beep: 'true',
   });
   assert.equal(config.pollSeconds, 30);
   assert.equal(config.cloud.region, 'DE');
+  assert.equal(config.cloud.app, 'nethome');
   assert.equal(config.energyFormat, 'bcd');
   assert.equal(config.language, 'fr');
   assert.equal(config.beep, true);

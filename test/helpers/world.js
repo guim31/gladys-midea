@@ -65,6 +65,8 @@ export function allUnits() {
  * @param {object} [options.config] raw integration config
  * @param {Array} [options.created] devices already created in Gladys
  * @param {object} [options.cloud] a fake cloud (default: knows every unit)
+ * @param {(spec: object) => object} [options.createCloud] one fake per cloud of
+ *   the chain instead (default: `cloud` for all)
  */
 export async function createWorld({
   units = [new FakeMidea({ host: '192.0.2.10' })],
@@ -73,6 +75,7 @@ export async function createWorld({
   created = [],
   connect = true,
   cloud,
+  createCloud,
   dataDir = mkdtempSync(join(tmpdir(), 'gladys-midea-')),
   timings = {},
 } = {}) {
@@ -89,7 +92,7 @@ export async function createWorld({
     timings: { scanGapMs: 0, ...timings },
     createLan: (options) =>
       new MideaLan({ ...options, connect: network.connect, timings: FAST_LAN }),
-    createCloud: () => fakeCloud,
+    createCloud: createCloud ?? (() => fakeCloud),
     probeHost: (host) => network.probe(host),
   });
   if (connect) {

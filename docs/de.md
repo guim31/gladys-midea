@@ -36,7 +36,7 @@ Nicht unterstützt: andere Midea-Geräte (Warmwasserbereiter, Ventilatoren...), 
    - **Sprache der Gerätenamen**: Sprache der Namen neuer Geräte und ihrer Funktionen (standardmäßig Französisch).
    - **Piepton bei jedem Befehl**: standardmäßig aus, damit eine Szene in der Nacht still bleibt.
    - **Format der Energiedaten**: Lass „Standard (BCD)“, außer die angezeigte Leistung oder Energie ist unsinnig.
-   - **Schlüssel neuerer Geräte (V3)**: die **Cloud-Region** des öffentlichen Kontos, mit dem die Schlüssel geholt werden (standardmäßig Europa), oder dein eigenes Konto, in **NetHome-Plus-Konto** und **NetHome-Plus-Passwort** (beide optional).
+   - **Schlüssel neuerer Geräte (V3)**: die **Cloud-App**, in der deine Geräte eingerichtet sind (standardmäßig **NetHome Plus**, oder **SmartHome**: die App MSmartHome, die auch Comfee und andere Marken nutzen), die **Cloud-Region** der öffentlichen Konten, mit denen die Schlüssel geholt werden (standardmäßig Europa), oder dein eigenes Konto dieser App, in **Eigenes Cloud-Konto** und **Passwort dieses Kontos** (beide optional).
    - **Token und Schlüssel von Hand**: optional, nur für ein V3-Gerät, für das die Cloud keinen Schlüssel liefert (siehe unten).
 4. Öffne den Tab **Entdecken**: Jedes gefundene Gerät erscheint als „Klimaanlage“, gefolgt von den letzten vier Zeichen seines WLAN-Namens. Füge die gewünschten zu Gladys hinzu.
 
@@ -44,7 +44,7 @@ Die Schaltfläche **Klimaanlagen suchen** (Tab Konfiguration) startet eine neue 
 
 ### Zu den Schlüsseln der V3-Geräte
 
-Ein V3-Gerät spricht nur mit einem Client, der sein Token und seinen Schlüssel kennt. Midea legt sie in seiner Cloud unter dem Gerät selbst ab, nicht unter einem Konto: Die Integration holt sie **einmal**, mit öffentlichen NetHome-Plus-Konten (die Praxis der freien Bibliotheken msmart-ng und midea-local) oder mit deinem eigenen Konto, wenn du es eingibst. Danach werden sie im Volume der Integration (`/data`) gespeichert und nie in die Protokolle geschrieben. Wird das Gerät zurückgesetzt oder in seiner App neu gekoppelt, bemerkt die Integration den abgelehnten Schlüssel und holt einen neuen.
+Ein V3-Gerät spricht nur mit einem Client, der sein Token und seinen Schlüssel kennt. Midea legt sie in seiner Cloud unter dem Gerät selbst ab, nicht unter einem Konto, aber nur in der Cloud der App, in der das Gerät eingerichtet wurde: NetHome Plus oder SmartHome (MSmartHome). Die Integration holt sie **einmal**, mit öffentlichen Konten beider Apps (die Praxis der freien Bibliotheken msmart-ng und midea-local) oder mit deinem eigenen Konto, wenn du es eingibst (an beiden Clouds probiert, danach die öffentlichen Konten): zuerst die gewählte App, dann die andere, sodass ein Gerät aus beiden Apps seinen Schlüssel bekommt, ohne dass du etwas änderst. Danach werden sie im Volume der Integration (`/data`) gespeichert und nie in die Protokolle geschrieben. Wird das Gerät zurückgesetzt oder in seiner App neu gekoppelt, bemerkt die Integration den abgelehnten Schlüssel und holt einen neuen.
 
 ## Geräte und Funktionen
 
@@ -148,7 +148,7 @@ Zum Ausschalten oder um eine einzelne Einstellung zu ändern, nutze die Standard
 ## Fehlerbehebung
 
 - **Kein Gerät gefunden**: Prüfe, ob es in seiner App verbunden und im selben Netzwerk wie Gladys ist; gib seine IP-Adresse in der Konfiguration ein; starte **Klimaanlagen suchen**.
-- **„Ein neueres Gerät (V3) hat keinen Schlüssel“**: Gladys konnte die Midea-Cloud nicht erreichen, oder das öffentliche Konto der Region kennt das Gerät nicht. Probiere eine andere **Cloud-Region** oder gib dein eigenes NetHome-Plus-Konto ein, dann starte **Klimaanlagen suchen** erneut.
+- **„Ein neueres Gerät (V3) hat keinen Schlüssel“**: Gladys konnte die Midea-Cloud nicht erreichen, oder die öffentlichen Konten der Region kennen das Gerät nicht. Probiere eine andere **Cloud-Region** oder gib dein eigenes Konto der App ein, in der das Gerät eingerichtet ist (wähle diese App unter **Cloud-App**), dann starte **Klimaanlagen suchen** erneut.
 - **Die Cloud liefert keinen Schlüssel** (manche Wärmepumpen): Wenn die Home-Assistant-Integration Midea AC LAN schon mit dem Gerät spricht, kopiere ihren Token und Schlüssel (aus ihrer gespeicherten Konfiguration) in **Token und Schlüssel von Hand**, als `token:schlüssel`, dann starte **Klimaanlagen suchen** erneut.
 - **Das Gerät antwortet nicht**: Prüfe, ob es Strom hat und ob sich seine Adresse nicht geändert hat; ein Modul nimmt nur eine Verbindung gleichzeitig an, schließe also andere lokale Werkzeuge, die mit ihm sprechen.
 - **Unsinnige Leistungs- oder Energiewerte**: Stelle das **Format der Energiedaten** auf „Binär“.

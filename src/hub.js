@@ -46,7 +46,7 @@ import {
   setEcoCommand,
   setSilentCommand,
 } from './midea/c3.js';
-import { NetHomePlusCloud } from './midea/cloud.js';
+import { CLOUD_APP_NAMES, cloudChain, createCloudClient } from './midea/cloud.js';
 import { DISCOVERY_PORTS, DISCOVERY_REQUEST, parseDiscoveryReply } from './midea/discovery.js';
 import { APPLIANCE } from './midea/frame.js';
 import { MideaLan } from './midea/lan.js';
@@ -185,7 +185,8 @@ export class MideaHub {
    * @param {boolean} [options.timers] periodic timers (off in tests)
    * @param {object} [options.timings] HUB_TIMINGS overrides
    * @param {(options: object) => MideaLan} [options.createLan]
-   * @param {(cloudConfig: object) => object} [options.createCloud]
+   * @param {(spec: { app: string, region: string, account?: string, password?: string }) => object} [options.createCloud]
+   *   the client of one cloud of `cloudChain`
    * @param {(host: string) => Promise<object|null>} [options.probeHost]
    */
   constructor({ gladys, store, timers = true, timings, createLan, createCloud, probeHost: probe }) {
@@ -194,10 +195,11 @@ export class MideaHub {
     this.timersEnabled = timers;
     this.timings = { ...HUB_TIMINGS, ...timings };
     this.createLan = createLan ?? ((options) => new MideaLan(options));
-    this.createCloud = createCloud ?? ((cloud) => new NetHomePlusCloud(cloud));
+    this.createCloud = createCloud ?? ((spec) => createCloudClient(spec));
     this.probeHost = probe ?? ((host) => probeHost(host));
     this.config = null;
-    this.cloud = null;
+    /** Cloud clients (logged in once), by link of the cloud chain. */
+    this.clouds = new Map();
     /** @type {Map<number, object>} unit records, by device id */
     this.records = new Map();
     /** Other Midea appliances seen, by device id: `{ type, host }`. */
@@ -257,7 +259,7 @@ export class MideaHub {
 
   applyConfig(config) {
     if (JSON.stringify(this.config?.cloud) !== JSON.stringify(config.cloud)) {
-      this.cloud = null;
+      this.clouds.clear();
     }
     this.config = config;
   }
@@ -638,31 +640,63 @@ export class MideaHub {
     );
   }
 
+  /** The client of one cloud of the chain, kept for the next units. */
+  cloudClient(spec) {
+    const id = `${spec.app}:${spec.account ? 'own' : 'public'}`;
+    if (!this.clouds.has(id)) {
+      this.clouds.set(id, this.createCloud(spec));
+    }
+    return this.clouds.get(id);
+  }
+
   /**
    * The token and key of a V3 unit: the pairs typed in the configuration
-   * first, then the Midea cloud (both byte orders of the udpid). Each pair is
-   * checked by a real handshake.
+   * first, then the Midea clouds of `cloudChain` (the chosen app, then the
+   * other one), both byte orders of the udpid for each. Each pair is checked
+   * by a real handshake.
    */
   async fetchKeys(record) {
-    const cloud = (endian) => () => {
-      this.cloud ??= this.createCloud(this.config.cloud);
-      return this.cloud.getToken(udpId(record.id, endian), record.id);
-    };
+    const cloud = (spec, endian) => ({
+      typed: false,
+      spec,
+      get: () => this.cloudClient(spec).getToken(udpId(record.id, endian), record.id),
+    });
     const attempts = [
       ...(this.config.manualKeys ?? []).map((pair) => ({ typed: true, get: async () => pair })),
-      { typed: false, get: cloud('little') },
-      { typed: false, get: cloud('big') },
+      ...cloudChain(this.config.cloud).flatMap((spec) => [
+        cloud(spec, 'little'),
+        cloud(spec, 'big'),
+      ]),
     ];
+    // The last refusal of each cloud and account, for the one line saying why:
+    // a wrong own password stays visible next to the public accounts' answer.
+    const refusals = new Map();
+    const unreachable = new Set();
     let lastError = null;
     for (const attempt of attempts) {
+      if (attempt.spec && unreachable.has(attempt.spec.app)) {
+        continue;
+      }
       let credentials;
       try {
         credentials = await attempt.get();
       } catch (err) {
         lastError = err;
-        if (err.network) {
-          // The cloud itself is unreachable: no use trying the other order.
+        if (attempt.spec) {
+          const name = CLOUD_APP_NAMES[attempt.spec.app];
+          refusals.set(attempt.spec.account ? `${name} (own account)` : name, err.message);
+          logger.debug(
+            `${this.label(record)}: ${CLOUD_APP_NAMES[attempt.spec.app]} cloud: ${err.message}`,
+          );
+        }
+        if (err.offline && attempt.spec) {
+          // No Internet at all: no use asking the other cloud either.
           break;
+        }
+        if (err.network && attempt.spec) {
+          // This cloud is unreachable: no use trying the other order, nor
+          // its other account (same server).
+          unreachable.add(attempt.spec.app);
         }
         continue;
       }
@@ -686,13 +720,13 @@ export class MideaHub {
         throw err;
       }
       record.credentials = credentials;
-      record.keySource = attempt.typed ? 'typed' : 'cloud';
+      record.keySource = attempt.typed ? 'typed' : `cloud ${CLOUD_APP_NAMES[attempt.spec.app]}`;
       record.keyProblem = null;
       this.problems.recover(`keys:${record.id}`, `${this.label(record)} has its keys`);
       logger.info(
         attempt.typed
           ? `${this.label(record)} accepts a token and key typed in the configuration`
-          : `Keys of ${this.label(record)} fetched from the Midea cloud and saved`,
+          : `Keys of ${this.label(record)} fetched from the Midea cloud (${CLOUD_APP_NAMES[attempt.spec.app]}) and saved`,
       );
       await this.save();
       return;
@@ -701,7 +735,11 @@ export class MideaHub {
     record.keyProblem = lastError?.name === 'CloudError' ? 'cloud' : 'refused';
     this.problems.fail(
       `keys:${record.id}`,
-      `No key for ${this.label(record)} (V3): ${lastError?.message ?? 'unknown error'}`,
+      `No key for ${this.label(record)} (V3): ${
+        refusals.size
+          ? [...refusals].map(([cloud, message]) => `${cloud}: ${message}`).join('; ')
+          : (lastError?.message ?? 'unknown error')
+      }`,
     );
     const error = new Error(`no key for ${this.label(record)}`);
     error.keys = true;
@@ -807,7 +845,7 @@ export class MideaHub {
     for (const record of this.records.values()) {
       record.keyProblem = null;
     }
-    this.cloud = null;
+    this.clouds.clear();
     await this.rediscover();
   }
 

@@ -20,7 +20,15 @@ import {
   setStateCommand,
   summarizeCapabilities,
 } from '../src/midea/ac.js';
-import { hashPassword, sign } from '../src/midea/cloud.js';
+import {
+  SMARTHOME_ACCOUNTS,
+  hashPassword,
+  pythonJson,
+  sign,
+  smartHomeIamPassword,
+  smartHomePassword,
+  smartHomeSign,
+} from '../src/midea/cloud.js';
 import { DISCOVERY_REQUEST, parseDiscoveryReply } from '../src/midea/discovery.js';
 import { crc8 } from '../src/midea/frame.js';
 import { V3Codec, decodePacket, encodePacket } from '../src/midea/packet.js';
@@ -206,6 +214,23 @@ test('cloud: request signature and password hash as msmart-ng', () => {
   const { path, body, sign: signature, loginId, password, passwordHash } = vectors.cloud;
   assert.equal(sign(path, body), signature);
   assert.equal(hashPassword(loginId, password), passwordHash);
+});
+
+test('SmartHome cloud: JSON body, HMAC signature and both password hashes as msmart-ng', () => {
+  const { contents, random, loginId, password, accounts } = vectors.smarthomeCloud;
+  // The body msmart-ng signs is Python's json.dumps: the same text from the same object.
+  assert.equal(pythonJson(JSON.parse(contents)), contents);
+  assert.equal(smartHomeSign(contents, random), vectors.smarthomeCloud.sign);
+  assert.equal(smartHomePassword(loginId, password), vectors.smarthomeCloud.passwordHash);
+  assert.equal(smartHomeIamPassword(loginId, password), vectors.smarthomeCloud.iamPassword);
+  assert.deepEqual(SMARTHOME_ACCOUNTS, accounts);
+});
+
+test('pythonJson: separators outside strings only, non-ASCII escaped as json.dumps does', () => {
+  assert.equal(
+    pythonJson({ a: 'x, y: z', b: [1, { c: 'é"€' }] }),
+    '{"a": "x, y: z", "b": [1, {"c": "\\u00e9\\"\\u20ac"}]}',
+  );
 });
 
 test('udpid in both byte orders as msmart-ng', () => {

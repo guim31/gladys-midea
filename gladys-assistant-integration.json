@@ -259,11 +259,49 @@
         "es": "Claves de los equipos recientes (V3)"
       },
       "description": {
-        "en": "Units sold since about 2020 need a key, fetched once from the Midea cloud, then kept in Gladys: everything else stays local. Public accounts are used by default; you may enter your own NetHome Plus account instead.",
-        "fr": "Les climatiseurs vendus depuis 2020 environ demandent une clé, obtenue une fois auprès du cloud Midea puis gardée dans Gladys : tout le reste est local. Des comptes publics servent par défaut ; vous pouvez saisir votre propre compte NetHome Plus.",
-        "de": "Seit etwa 2020 verkaufte Geräte brauchen einen Schlüssel, der einmal aus der Midea-Cloud geholt und dann in Gladys gespeichert wird: Alles andere bleibt lokal. Standardmäßig werden öffentliche Konten genutzt; du kannst stattdessen dein eigenes NetHome-Plus-Konto eingeben.",
-        "es": "Los equipos vendidos desde 2020 aproximadamente necesitan una clave, obtenida una vez de la nube de Midea y guardada en Gladys: todo lo demás es local. Por defecto se usan cuentas públicas; puede introducir su propia cuenta NetHome Plus."
+        "en": "Units sold since about 2020 need a key, fetched once from the Midea cloud, then kept in Gladys: everything else stays local. Public accounts are used by default; you may enter your own NetHome Plus or SmartHome account instead.",
+        "fr": "Les climatiseurs vendus depuis 2020 environ demandent une clé, obtenue une fois auprès du cloud Midea puis gardée dans Gladys : tout le reste est local. Des comptes publics servent par défaut ; vous pouvez saisir votre propre compte NetHome Plus ou SmartHome.",
+        "de": "Seit etwa 2020 verkaufte Geräte brauchen einen Schlüssel, der einmal aus der Midea-Cloud geholt und dann in Gladys gespeichert wird: Alles andere bleibt lokal. Standardmäßig werden öffentliche Konten genutzt; du kannst stattdessen dein eigenes NetHome-Plus- oder SmartHome-Konto eingeben.",
+        "es": "Los equipos vendidos desde 2020 aproximadamente necesitan una clave, obtenida una vez de la nube de Midea y guardada en Gladys: todo lo demás es local. Por defecto se usan cuentas públicas; puede introducir su propia cuenta NetHome Plus o SmartHome."
       }
+    },
+    {
+      "key": "cloud_app",
+      "type": "select",
+      "label": {
+        "en": "Cloud app",
+        "fr": "Application du cloud",
+        "de": "Cloud-App",
+        "es": "Aplicación de la nube"
+      },
+      "description": {
+        "en": "The app your units are set up in. The other one is tried too if the key cannot be fetched.",
+        "fr": "L'application où vos appareils sont configurés. L'autre est aussi essayée si la clé ne peut pas être obtenue.",
+        "de": "Die App, in der deine Geräte eingerichtet sind. Die andere wird auch probiert, wenn der Schlüssel nicht geholt werden kann.",
+        "es": "La aplicación en la que están configurados sus equipos. También se prueba la otra si no se puede obtener la clave."
+      },
+      "required": false,
+      "default": "nethome",
+      "options": [
+        {
+          "value": "nethome",
+          "label": {
+            "en": "NetHome Plus",
+            "fr": "NetHome Plus",
+            "de": "NetHome Plus",
+            "es": "NetHome Plus"
+          }
+        },
+        {
+          "value": "smarthome",
+          "label": {
+            "en": "SmartHome (MSmartHome, Comfee…)",
+            "fr": "SmartHome (MSmartHome, Comfee…)",
+            "de": "SmartHome (MSmartHome, Comfee…)",
+            "es": "SmartHome (MSmartHome, Comfee…)"
+          }
+        }
+      ]
     },
     {
       "key": "cloud_region",
@@ -316,10 +354,16 @@
       "key": "cloud_account",
       "type": "string",
       "label": {
-        "en": "NetHome Plus account (optional)",
-        "fr": "Compte NetHome Plus (facultatif)",
-        "de": "NetHome-Plus-Konto (optional)",
-        "es": "Cuenta NetHome Plus (opcional)"
+        "en": "Own cloud account (optional)",
+        "fr": "Compte du cloud (facultatif)",
+        "de": "Eigenes Cloud-Konto (optional)",
+        "es": "Cuenta propia de la nube (opcional)"
+      },
+      "description": {
+        "en": "Account of the cloud app chosen above. It is tried on both clouds, then the public accounts.",
+        "fr": "Compte de l'application du cloud choisie ci-dessus. Il est essayé sur les deux clouds, puis les comptes publics.",
+        "de": "Konto der oben gewählten Cloud-App. Es wird an beiden Clouds probiert, danach die öffentlichen Konten.",
+        "es": "Cuenta de la aplicación de la nube elegida arriba. Se prueba en ambas nubes y después las cuentas públicas."
       },
       "placeholder": {
         "en": "e-mail address",
@@ -334,10 +378,10 @@
       "key": "cloud_password",
       "type": "secret",
       "label": {
-        "en": "NetHome Plus password (optional)",
-        "fr": "Mot de passe NetHome Plus (facultatif)",
-        "de": "NetHome-Plus-Passwort (optional)",
-        "es": "Contraseña NetHome Plus (opcional)"
+        "en": "Password of this account (optional)",
+        "fr": "Mot de passe de ce compte (facultatif)",
+        "de": "Passwort dieses Kontos (optional)",
+        "es": "Contraseña de esta cuenta (opcional)"
       },
       "required": false
     },

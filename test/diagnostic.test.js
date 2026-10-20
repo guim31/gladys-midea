@@ -85,10 +85,10 @@ test('fleet diagnostic: every unit, masked, without any secret', async (t) => {
   assert.match(text, /\(dehumidifier 0xA1, V2, model/);
   assert.match(text, /Climatiseur|Air conditioner/);
   assert.match(text, /\(heat pump 0xC3, V3, model/);
-  assert.match(text, /keys: present \(cloud\)/);
+  assert.match(text, /keys: present \(cloud NetHome Plus\)/);
   assert.match(text, /keys: not needed \(V2\)/);
   assert.match(text, /not supported: appliance 0xCC/);
-  assert.match(text, /own NetHome Plus account: yes, typed token\/key pairs: 1/);
+  assert.match(text, /cloud app: nethome, region: DE, own account: yes, typed token\/key pairs: 1/);
   assert.match(text, /"zoneTargets":\[50,25\]/);
   assert.match(text, /answering: yes, last read \d+ s ago/);
   assertNoSecret(text, [ac, pump, other], ['someone@example.com', 'hunter2-pass']);

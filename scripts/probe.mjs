@@ -3,14 +3,15 @@
 // Read-only check of the real world, outside the tests (which never touch the
 // network): the Midea cloud and, optionally, a real unit on the local network.
 //
-//   node scripts/probe.mjs --cloud [--region DE|US|KR]
-//       Logs in to the NetHome Plus cloud with the public account of the
-//       region and asks for the token of an invented udpid: proves the login,
+//   node scripts/probe.mjs --cloud [--app nethome|smarthome] [--region DE|US|KR]
+//       Logs in to the NetHome Plus (default) or SmartHome cloud with the
+//       public account of the region and asks for the token of an invented udpid: proves the login,
 //       the signature and the token endpoint work (no token is expected).
 //
-//   node scripts/probe.mjs --host 192.168.1.60 [--region DE]
+//   node scripts/probe.mjs --host 192.168.1.60 [--app nethome] [--region DE]
 //       Sends the discovery request to the unit, then reads (never writes) its
-//       capabilities and state; a V3 unit gets its key from the cloud first.
+//       capabilities and state; a V3 unit gets its key from the clouds first
+//       (the chosen app, then the other one, as the integration does).
 //       An air conditioner (0xAC), a heat pump (0xC3) and a dehumidifier
 //       (0xA1) are read.
 //
@@ -23,7 +24,7 @@
 // -----------------------------------------------------------------------------
 
 import { parseArgs } from 'node:util';
-import { NetHomePlusCloud } from '../src/midea/cloud.js';
+import { CLOUD_APP_NAMES, cloudChain, createCloudClient } from '../src/midea/cloud.js';
 import {
   decodeResponse,
   getCapabilitiesCommand,
@@ -49,6 +50,7 @@ const { values } = parseArgs({
     cloud: { type: 'boolean', default: false },
     host: { type: 'string' },
     region: { type: 'string', default: 'DE' },
+    app: { type: 'string', default: 'nethome' },
   },
 });
 
@@ -56,9 +58,9 @@ const mask = (text) => (text.length > 6 ? `${text.slice(0, 2)}…${text.slice(-2
 const say = (line) => process.stdout.write(`${line}\n`);
 
 async function probeCloud() {
-  const cloud = new NetHomePlusCloud({ region: values.region });
+  const cloud = createCloudClient({ app: values.app, region: values.region });
   await cloud.login();
-  say(`cloud ${values.region}: login OK`);
+  say(`cloud ${CLOUD_APP_NAMES[cloud.app]} ${values.region}: login OK`);
   try {
     await cloud.getToken(udpId(0x1e0000c0ffee, 'little'), 0x1e0000c0ffee);
     say('cloud: unexpected token for an invented device');
@@ -98,11 +100,17 @@ async function probeUnit(host) {
     credentials = { token: token.toLowerCase(), key: key.toLowerCase() };
     say('keys: taken from MIDEA_TOKEN and MIDEA_KEY');
   } else if (info.version === 3) {
-    const cloud = new NetHomePlusCloud({ region: values.region });
-    for (const endian of ['little', 'big']) {
+    const attempts = cloudChain({ app: values.app, region: values.region }).flatMap((spec) => [
+      [createCloudClient(spec), 'little'],
+      [null, 'big'],
+    ]);
+    let cloud = null;
+    for (const [client, endian] of attempts) {
+      cloud = client ?? cloud;
+      const name = CLOUD_APP_NAMES[cloud.app];
       try {
         credentials = await cloud.getToken(udpId(info.deviceId, endian), info.deviceId);
-        say(`cloud: key found (${endian} udpid)`);
+        say(`cloud ${name}: key found (${endian} udpid)`);
         const lan = new MideaLan({ ...info, credentials });
         try {
           await check(lan);
@@ -114,7 +122,7 @@ async function probeUnit(host) {
           credentials = null;
         }
       } catch (err) {
-        say(`cloud: ${endian} udpid: ${err.message}`);
+        say(`cloud ${name}: ${endian} udpid: ${err.message}`);
       }
     }
     if (!credentials) return;

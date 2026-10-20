@@ -36,15 +36,15 @@ particular:
   and error state, and, for the V3 units, the **token and key** fetched from the
   Midea cloud. Whoever reads this file can control those units on the local
   network.
-- **Secrets of the configuration**: the optional NetHome Plus account and
-  password. The password is only sent to the Midea cloud, hashed as the
-  NetHome Plus app does; it is never logged, nor are the tokens, the keys or
+- **Secrets of the configuration**: the optional NetHome Plus or SmartHome
+  account and password. The password is only sent to the Midea clouds, hashed
+  as their apps do; it is never logged, nor are the tokens, the keys or
   the session keys.
 - **Network**: the integration talks to the units in TCP on port 6444 of the
   local network, asks the Gladys core to broadcast the Midea discovery request
   (UDP 6445 and 20086, declared in the manifest), sends that request in unicast
-  to the typed addresses, and reaches `https://mapp.appsmb.com` (Midea's
-  NetHome Plus cloud) only to fetch the key of a V3 unit that has none.
+  to the typed addresses, and reaches `https://mapp.appsmb.com` and
+  `https://mp-prod.appsmb.com` (Midea's NetHome Plus and SmartHome clouds) only to fetch the key of a V3 unit that has none.
 
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),

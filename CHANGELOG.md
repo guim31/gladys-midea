@@ -10,6 +10,15 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Fixed
+
+- V3 units set up in the SmartHome / MSmartHome app (Comfee and other brands)
+  get their key: the integration now also speaks the SmartHome cloud, and tries
+  it after NetHome Plus (or first, with the new "Cloud app" setting). The own
+  account fields serve the chosen app; an own account is now tried on both
+  clouds (its e-mail and hashed password are sent to both), then the public
+  accounts.
+
 ## [1.2.0] - 2026-10-19
 
 ### Added

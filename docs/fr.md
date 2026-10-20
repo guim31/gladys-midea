@@ -36,7 +36,7 @@ Non pris en charge : les autres appareils Midea (chauffe-eau, ventilateurs...), 
    - **Langue des noms des appareils** : langue des noms donnés aux nouveaux appareils et à leurs fonctionnalités (français par défaut).
    - **Bip à chaque commande** : désactivé par défaut, pour qu'une scène de nuit reste silencieuse.
    - **Format des données d'énergie** : laissez « Standard (BCD) » sauf si la puissance ou l'énergie affichée est absurde.
-   - **Clés des climatiseurs récents (V3)** : la **Région du cloud** du compte public qui sert à obtenir les clés (Europe par défaut), ou votre propre compte, dans **Compte NetHome Plus** et **Mot de passe NetHome Plus** (facultatifs).
+   - **Clés des climatiseurs récents (V3)** : l'**Application du cloud** où vos appareils sont configurés (**NetHome Plus** par défaut, ou **SmartHome** : l'application MSmartHome, utilisée aussi par Comfee et d'autres marques), la **Région du cloud** des comptes publics qui servent à obtenir les clés (Europe par défaut), ou votre propre compte de cette application, dans **Compte du cloud** et **Mot de passe de ce compte** (facultatifs).
    - **Jeton et clé saisis à la main** : facultatif, seulement pour un appareil V3 dont le cloud ne donne pas la clé (voir plus bas).
 4. Ouvrez l'onglet **Découverte** : chaque climatiseur trouvé apparaît, nommé « Climatiseur » suivi des quatre derniers caractères de son nom Wi-Fi. Ajoutez à Gladys ceux que vous voulez.
 
@@ -44,7 +44,7 @@ Le bouton **Rechercher les climatiseurs** (onglet Configuration) relance une rec
 
 ### À propos des clés des climatiseurs V3
 
-Un climatiseur V3 ne parle qu'à un client qui connaît son jeton et sa clé. Midea les range dans son cloud, au nom de l'appareil lui-même et non d'un compte : l'intégration les obtient **une seule fois**, avec des comptes NetHome Plus publics (la pratique des bibliothèques libres msmart-ng et midea-local), ou avec votre propre compte si vous le saisissez. Ils sont ensuite enregistrés dans le volume de l'intégration (`/data`) et jamais écrits dans les journaux. Si l'appareil est réinitialisé ou réappairé dans son application, l'intégration voit la clé refusée et en obtient une nouvelle.
+Un climatiseur V3 ne parle qu'à un client qui connaît son jeton et sa clé. Midea les range dans son cloud, au nom de l'appareil lui-même et non d'un compte, mais seulement dans le cloud de l'application où l'appareil a été configuré : NetHome Plus ou SmartHome (MSmartHome). L'intégration les obtient **une seule fois**, avec des comptes publics des deux applications (la pratique des bibliothèques libres msmart-ng et midea-local), ou avec votre propre compte si vous le saisissez (essayé sur les deux clouds, puis les comptes publics) : l'application choisie d'abord, puis l'autre, si bien qu'un appareil de l'une ou l'autre obtient sa clé sans rien changer. Ils sont ensuite enregistrés dans le volume de l'intégration (`/data`) et jamais écrits dans les journaux. Si l'appareil est réinitialisé ou réappairé dans son application, l'intégration voit la clé refusée et en obtient une nouvelle.
 
 ## Appareils et fonctionnalités
 
@@ -148,7 +148,7 @@ Pour éteindre le climatiseur, ou changer un seul réglage, utilisez l'action st
 ## Dépannage
 
 - **Aucun climatiseur trouvé** : vérifiez qu'il est connecté dans son application et sur le même réseau que Gladys ; saisissez son adresse IP dans la configuration ; lancez **Rechercher les climatiseurs**.
-- **« Un climatiseur récent (V3) n'a pas de clé »** : Gladys n'a pas pu joindre le cloud Midea, ou le compte public de la région ne connaît pas l'appareil. Essayez une autre **Région du cloud**, ou saisissez votre propre compte NetHome Plus, puis relancez **Rechercher les climatiseurs**.
+- **« Un climatiseur récent (V3) n'a pas de clé »** : Gladys n'a pas pu joindre le cloud Midea, ou les comptes publics de la région ne connaissent pas l'appareil. Essayez une autre **Région du cloud**, ou saisissez votre propre compte de l'application où l'appareil est configuré (choisissez cette application dans **Application du cloud**), puis relancez **Rechercher les climatiseurs**.
 - **Le cloud ne donne pas de clé** (certaines pompes à chaleur) : si l'intégration Midea AC LAN de Home Assistant parle déjà à l'appareil, recopiez son jeton et sa clé (dans sa configuration enregistrée) dans **Jeton et clé saisis à la main**, sous la forme `jeton:clé`, puis relancez **Rechercher les climatiseurs**.
 - **Le climatiseur ne répond pas** : vérifiez qu'il est alimenté et que son adresse n'a pas changé ; un module n'accepte qu'une connexion à la fois, fermez les autres outils locaux qui lui parlent.
 - **Puissance ou énergie absurdes** : passez le **Format des données d'énergie** sur « Binaire ».

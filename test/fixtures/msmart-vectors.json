@@ -438,5 +438,19 @@
     "little": "ea89d9ca66b5a2982a92e99bcf9d756c",
     "big": "6adae7bf8bf1549236e9b1d344cacf8c"
   },
-  "discoveryRequest": "5a5a01114800920000000000000000000000000000000000000000000000000000000000000000007f75bd6b3e4f8b762e849c6e578d6590036e9d4342a50f1f569eb8ec918e92e5"
+  "discoveryRequest": "5a5a01114800920000000000000000000000000000000000000000000000000000000000000000007f75bd6b3e4f8b762e849c6e578d6590036e9d4342a50f1f569eb8ec918e92e5",
+  "smarthomeCloud": {
+    "contents": "{\"appId\": \"1010\", \"src\": \"1010\", \"format\": 2, \"clientType\": 1, \"language\": \"en_US\", \"deviceId\": \"0123456789abcdef\", \"stamp\": \"20261020120000\", \"reqId\": \"00112233445566778899aabbccddeeff\", \"loginAccount\": \"someone+test@example.com\"}",
+    "random": "ffeeddccbbaa99887766554433221100",
+    "sign": "95b2f17b3e2bb4c587366ce5ef2e1bf881e0fa5c18eb1a3debeffd346b7a1442",
+    "loginId": "a1b2c3",
+    "password": "not-a-real-password",
+    "passwordHash": "156d608e31a69fef749dbc811af40f7e2701bf70bb86de6ca673ff44ee7f69fb",
+    "iamPassword": "5ccf4aec797ee42bdb501e279d0050f371d62ed789e6bfeb0a54d4fea6c8dbdc",
+    "accounts": {
+      "DE": ["midea_eu@mailinator.com", "das_ist_passwort1"],
+      "KR": ["midea_sea@mailinator.com", "password_for_sea1"],
+      "US": ["midea@mailinator.com", "this_is_a_password1"]
+    }
+  }
 }

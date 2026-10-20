@@ -115,6 +115,112 @@ test('V3: both byte orders of the udpid are tried', async (t) => {
   assert.equal(world.fake.discoveredDevices.length, 1);
 });
 
+test('V3: a unit of the SmartHome app gets its key with the default setting (NetHome Plus first)', async (t) => {
+  const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
+  const nethome = createFakeCloud([]);
+  const smarthome = createFakeCloud([unit]);
+  const specs = [];
+  const world = await createWorld({
+    units: [unit],
+    createCloud: (spec) => {
+      specs.push(spec);
+      return spec.app === 'smarthome' ? smarthome : nethome;
+    },
+  });
+  t.after(() => world.app.stop());
+  assert.equal(world.fake.discoveredDevices.length, 1);
+  assert.equal(nethome.calls.length, 2, 'both byte orders asked to NetHome Plus first');
+  assert.equal(smarthome.calls.length, 1);
+  assert.deepEqual(specs, [
+    { app: 'nethome', region: 'DE' },
+    { app: 'smarthome', region: 'DE' },
+  ]);
+  assert.equal(world.hub.records.get(unit.id).keySource, 'cloud SmartHome');
+});
+
+test('V3: with SmartHome chosen and an own account, NetHome Plus is the fallback', async (t) => {
+  const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
+  const refused = {
+    calls: [],
+    async getToken(udpid) {
+      this.calls.push(udpid);
+      throw Object.assign(new Error('Midea cloud refused: password error (3101)'), {
+        name: 'CloudError',
+        code: 3101,
+      });
+    },
+  };
+  const nethome = createFakeCloud([unit]);
+  const specs = [];
+  const world = await createWorld({
+    units: [unit],
+    config: {
+      language: 'en',
+      cloud_app: 'smarthome',
+      cloud_account: 'someone@example.com',
+      cloud_password: 'hunter2-pass',
+    },
+    createCloud: (spec) => {
+      specs.push(spec);
+      return spec.app === 'nethome' && !spec.account ? nethome : refused;
+    },
+  });
+  t.after(() => world.app.stop());
+  assert.equal(world.fake.discoveredDevices.length, 1);
+  assert.deepEqual(
+    specs.map((spec) => `${spec.app}:${spec.account ? 'own' : 'public'}`),
+    ['smarthome:own', 'nethome:own', 'smarthome:public', 'nethome:public'],
+  );
+  assert.equal(world.hub.records.get(unit.id).keySource, 'cloud NetHome Plus');
+});
+
+test("V3: a wrong own password stays in the reason, next to the public accounts' answer", async (t) => {
+  const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
+  const refuse = (message, code) => ({
+    calls: [],
+    async getToken(udpid) {
+      this.calls.push(udpid);
+      throw Object.assign(new Error(message), { name: 'CloudError', code });
+    },
+  });
+  const wrongPassword = refuse('Midea cloud refused: password error (3101)', 3101);
+  const noToken = refuse('Midea cloud has no token for this device', 'NO_TOKEN');
+  const world = await createWorld({
+    units: [unit],
+    config: { language: 'en', cloud_account: 'someone@example.com', cloud_password: 'nope' },
+    createCloud: (spec) => (spec.account ? wrongPassword : noToken),
+  });
+  t.after(() => world.app.stop());
+  const { message } = world.hub.problems.active.get(`keys:${unit.id}`);
+  assert.match(message, /NetHome Plus \(own account\): Midea cloud refused: password error/);
+  assert.match(message, /SmartHome: Midea cloud has no token/);
+  assert.ok(!message.includes('someone@example.com'));
+});
+
+test('V3: without Internet the other cloud is not asked', async (t) => {
+  const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
+  const offline = {
+    calls: [],
+    async getToken(udpid) {
+      this.calls.push(udpid);
+      throw Object.assign(new Error('Midea cloud unreachable (ENOTFOUND)'), {
+        name: 'CloudError',
+        network: true,
+        offline: true,
+      });
+    },
+  };
+  const smarthome = createFakeCloud([unit]);
+  const world = await createWorld({
+    units: [unit],
+    createCloud: (spec) => (spec.app === 'nethome' ? offline : smarthome),
+  });
+  t.after(() => world.app.stop());
+  assert.equal(offline.calls.length, 1);
+  assert.equal(smarthome.calls.length, 0);
+  assert.deepEqual(world.fake.discoveredDevices, []);
+});
+
 test('V3: without the cloud the unit is not published, the status and the search say why', async (t) => {
   const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
   const cloud = createFakeCloud([unit], { reachable: false });
@@ -125,7 +231,9 @@ test('V3: without the cloud the unit is not published, the status and the search
   assert.match(world.fake.connectionStatus.message.en, /\(V3\) unit has no key/);
   const { data } = await world.fake.action('search', {});
   assert.match(data.message.en, /no key from the Midea cloud/);
-  assert.equal(cloud.calls.length, 2, 'once at start, once more by the search');
+  // Each cloud app once at start (one byte order is enough to see it is down),
+  // and again by the search.
+  assert.equal(cloud.calls.length, 4);
 });
 
 test('V3: a unit re-paired in its app gets new keys', async (t) => {
