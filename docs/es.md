@@ -36,7 +36,7 @@ No compatibles: los demás aparatos Midea (calentadores de agua, ventiladores...
    - **Idioma de los nombres de los dispositivos**: idioma de los nombres de los nuevos dispositivos y de sus funciones (francés por defecto).
    - **Pitido en cada orden**: desactivado por defecto, para que una escena nocturna sea silenciosa.
    - **Formato de los datos de energía**: deje «Estándar (BCD)» salvo si la potencia o la energía mostrada es absurda.
-   - **Claves de los equipos recientes (V3)**: la **Región de la nube** de la cuenta pública con la que se obtienen las claves (Europa por defecto), o su propia cuenta, en **Cuenta NetHome Plus** y **Contraseña NetHome Plus** (opcionales).
+   - **Claves de los equipos recientes (V3)**: la **Aplicación de la nube** en la que están configurados sus equipos (**NetHome Plus** por defecto, o **SmartHome**: la aplicación MSmartHome, que también usan Comfee y otras marcas), la **Región de la nube** de las cuentas públicas con las que se obtienen las claves (Europa por defecto), o su propia cuenta de esa aplicación, en **Cuenta propia de la nube** y **Contraseña de esta cuenta** (opcionales).
    - **Token y clave introducidos a mano**: opcional, solo para un equipo V3 cuya clave no da la nube (véase más abajo).
 4. Abra la pestaña **Descubrir**: cada equipo encontrado aparece con el nombre «Aire acondicionado» seguido de los cuatro últimos caracteres de su nombre Wi-Fi. Añada a Gladys los que desee.
 
@@ -44,7 +44,7 @@ El botón **Buscar aires acondicionados** (pestaña Configuración) inicia una n
 
 ### Acerca de las claves de los equipos V3
 
-Un equipo V3 solo habla con un cliente que conoce su token y su clave. Midea los guarda en su nube a nombre del propio equipo, no de una cuenta: la integración los obtiene **una sola vez**, con cuentas NetHome Plus públicas (la práctica de las bibliotecas libres msmart-ng y midea-local), o con su propia cuenta si la introduce. Después se guardan en el volumen de la integración (`/data`) y nunca se escriben en los registros. Si el equipo se restablece o se vuelve a emparejar en su aplicación, la integración detecta la clave rechazada y obtiene una nueva.
+Un equipo V3 solo habla con un cliente que conoce su token y su clave. Midea los guarda en su nube a nombre del propio equipo, no de una cuenta, pero solo en la nube de la aplicación con la que se configuró el equipo: NetHome Plus o SmartHome (MSmartHome). La integración los obtiene **una sola vez**, con cuentas públicas de ambas aplicaciones (la práctica de las bibliotecas libres msmart-ng y midea-local), o con su propia cuenta si la introduce: primero la aplicación elegida y luego la otra, de modo que un equipo de cualquiera de las dos obtiene su clave sin cambiar nada. Después se guardan en el volumen de la integración (`/data`) y nunca se escriben en los registros. Si el equipo se restablece o se vuelve a emparejar en su aplicación, la integración detecta la clave rechazada y obtiene una nueva.
 
 ## Dispositivos y funciones
 
@@ -148,7 +148,7 @@ Para apagar el equipo, o cambiar un solo ajuste, utilice la acción estándar «
 ## Solución de problemas
 
 - **No se encuentra ningún equipo**: compruebe que está conectado en su aplicación y en la misma red que Gladys; introduzca su dirección IP en la configuración; ejecute **Buscar aires acondicionados**.
-- **«Un equipo reciente (V3) no tiene clave»**: Gladys no ha podido contactar con la nube de Midea, o la cuenta pública de la región no conoce el equipo. Pruebe otra **Región de la nube**, o introduzca su propia cuenta NetHome Plus, y vuelva a ejecutar **Buscar aires acondicionados**.
+- **«Un equipo reciente (V3) no tiene clave»**: Gladys no ha podido contactar con la nube de Midea, o las cuentas públicas de la región no conocen el equipo. Pruebe otra **Región de la nube**, o introduzca su propia cuenta de la aplicación en la que está configurado el equipo (elija esa aplicación en **Aplicación de la nube**), y vuelva a ejecutar **Buscar aires acondicionados**.
 - **La nube no da clave** (algunas bombas de calor): si la integración Midea AC LAN de Home Assistant ya se comunica con el equipo, copie su token y su clave (en su configuración guardada) en **Token y clave introducidos a mano**, con la forma `token:clave`, y vuelva a ejecutar **Buscar aires acondicionados**.
 - **El equipo no responde**: compruebe que tiene corriente y que su dirección no ha cambiado; un módulo solo acepta una conexión a la vez, cierre otras herramientas locales que le hablen.
 - **Valores de potencia o energía absurdos**: cambie el **Formato de los datos de energía** a «Binario».

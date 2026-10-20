@@ -47,7 +47,7 @@ src/midea/a1.js                   dehumidifier (0xA1) commands and state, after 
 src/midea/discovery.js            discovery request and reply parsing
 src/midea/udp.js                  unicast discovery of a typed address
 src/midea/lan.js                  one TCP session per unit (V3 handshake, retries, serialized requests)
-src/midea/cloud.js                NetHome Plus cloud: token and key of a V3 unit, nothing else
+src/midea/cloud.js                NetHome Plus and SmartHome clouds: token and key of a V3 unit, nothing else
 src/store.js                      /data/midea-state.json (units, capabilities, V3 keys; mode 0600)
 src/problems.js                   repeated failures logged once, and their end once
 src/texts.js                      connection status and search report texts (4 languages)
@@ -275,8 +275,11 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
   saisies passent par un unicast depuis le conteneur (`src/midea/udp.js`), qui traverse le NAT.
 - **V3** : jeton et clé rangés par le cloud sous l'« udpid » de l'appareil (SHA-256 de l'id sur 6
   octets, petit ou grand boutiste selon le module : essayer les deux, chaque paire vérifiée par une vraie
-  poignée de main). Comptes NetHome Plus publics par région (pratique de msmart-ng). Clé refusée plus tard
-  (appareil réappairé) : la redemander une fois. La clé de session expire au bout de 12 h.
+  poignée de main). Comptes publics NetHome Plus et SmartHome par région (pratique de msmart-ng) : un jeton
+  n'est connu que du cloud de l'application où l'appareil a été configuré (Comfee : SmartHome, fil
+  11140), d'où la chaîne `cloudChain` (application choisie, puis l'autre). Le cloud SmartHome exige
+  `applianceCodes` avec getToken (sinon 3004) et met plusieurs secondes à se connecter (5,7 s
+  mesurées). Clé refusée plus tard (appareil réappairé) : la redemander une fois. La clé de session expire au bout de 12 h.
 - **Commandes** : l'appareil n'a pas de commande partielle, chaque trame de contrôle porte tous les
   réglages ; il faut donc l'état courant avant toute commande. Éco et turbo s'excluent. Le bip est
   désactivé par défaut (scènes de nuit).

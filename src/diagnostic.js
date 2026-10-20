@@ -7,7 +7,7 @@
 // demand, from the Configuration screen, as plain text the user pastes into a
 // GitHub issue in one gesture.
 //
-//   - secrets (V3 tokens and keys, typed or from the cloud, the NetHome Plus
+//   - secrets (V3 tokens and keys, typed or from the cloud, the own cloud
 //     account and password) are never printed, and the final text is scrubbed
 //     of them whatever the options;
 //   - identifiers (device ids, serial numbers, local addresses) are masked
@@ -195,7 +195,7 @@ function configurationLines(hub) {
     '',
     'Configuration',
     `  language: ${config.language}, refresh: ${config.pollSeconds} s, beep: ${yesNo(config.beep)}, energy format: ${config.energyFormat}`,
-    `  cloud region: ${config.cloud?.region}, own NetHome Plus account: ${yesNo(config.cloud?.account)}, typed token/key pairs: ${config.manualKeys?.length ?? 0}`,
+    `  cloud app: ${config.cloud?.app}, region: ${config.cloud?.region}, own account: ${yesNo(config.cloud?.account)}, typed token/key pairs: ${config.manualKeys?.length ?? 0}`,
     `  typed addresses: ${config.hosts?.length ?? 0}, ignored: ${config.invalidHosts?.length ?? 0}`,
   ];
 }

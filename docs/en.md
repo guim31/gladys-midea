@@ -36,7 +36,7 @@ Not supported: other Midea appliances (water heaters, fans...), which the search
    - **Language of the device names**: language of the names given to the new devices and their features (French by default).
    - **Beep on each command**: off by default, so that a scene at night stays silent.
    - **Energy data format**: leave "Standard (BCD)" unless the power or energy shown is absurd.
-   - **Keys of recent units (V3)**: the **Cloud region** of the public account used to fetch the keys (Europe by default), or your own account, in **NetHome Plus account** and **NetHome Plus password** (both optional).
+   - **Keys of recent units (V3)**: the **Cloud app** your units are set up in (**NetHome Plus** by default, or **SmartHome**: the MSmartHome app, also used by Comfee and other brands), the **Cloud region** of the public accounts used to fetch the keys (Europe by default), or your own account of that app, in **Own cloud account** and **Password of this account** (both optional).
    - **Token and key typed by hand**: optional, only for a V3 unit the cloud gives no key (see below).
 4. Open the **Discovery** tab: every unit found appears, named "Air conditioner" followed by the last four characters of its Wi-Fi name. Add the ones you want to Gladys.
 
@@ -44,7 +44,7 @@ The **Search for air conditioners** button (Configuration tab) runs a new search
 
 ### About the keys of the V3 units
 
-A V3 unit only talks to a client that knows its token and key. These are stored by Midea in its cloud, filed under the unit itself, not under an account: the integration fetches them **once**, with public NetHome Plus accounts (the practice of the open-source libraries msmart-ng and midea-local), or with your own account if you enter it. They are then saved in Gladys' integration volume (`/data`) and never written in the logs. If the unit is reset or paired again in its app, the integration notices the refused key and fetches a new one.
+A V3 unit only talks to a client that knows its token and key. These are stored by Midea in its cloud, filed under the unit itself, not under an account, but only in the cloud of the app the unit was set up with: NetHome Plus or SmartHome (MSmartHome). The integration fetches them **once**, with public accounts of both apps (the practice of the open-source libraries msmart-ng and midea-local), or with your own account if you enter it: the chosen app first, then the other one, so a unit of either app gets its key without changing anything. They are then saved in Gladys' integration volume (`/data`) and never written in the logs. If the unit is reset or paired again in its app, the integration notices the refused key and fetches a new one.
 
 ## Devices and features
 
@@ -148,7 +148,7 @@ Turning the unit off, or changing a single setting, uses the standard "Control a
 ## Troubleshooting
 
 - **No unit found**: check that the unit is connected in its app and on the same network as Gladys; enter its IP address in the configuration; run **Search for air conditioners**.
-- **"A recent (V3) unit has no key"**: Gladys could not reach the Midea cloud, or the public account of the region does not know the unit. Try another **Cloud region**, or enter your own NetHome Plus account, then run **Search for air conditioners** again.
+- **"A recent (V3) unit has no key"**: Gladys could not reach the Midea cloud, or the public accounts of the region do not know the unit. Try another **Cloud region**, or enter your own account of the app the unit is set up in (choose that app in **Cloud app**), then run **Search for air conditioners** again.
 - **The cloud gives no key** (some heat pumps): if Home Assistant's Midea AC LAN integration already talks to the unit, copy its token and key (in its saved configuration) into **Token and key typed by hand**, as `token:key`, then run **Search for air conditioners** again.
 - **The unit does not answer**: check that it is powered and that its address did not change; a module only accepts one connection at a time, so close other local tools that talk to it.
 - **Absurd power or energy values**: switch the **Energy data format** to "Binary".

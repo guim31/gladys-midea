@@ -4,7 +4,7 @@
 // the rest of the code never deals with strings, blanks or `undefined`.
 // -----------------------------------------------------------------------------
 
-import { REGIONS } from './midea/cloud.js';
+import { CLOUD_APPS, REGIONS } from './midea/cloud.js';
 
 export const LANGUAGES = ['en', 'fr', 'de', 'es'];
 
@@ -16,6 +16,7 @@ export const ENERGY_FORMATS = ['bcd', 'binary'];
 export const DEFAULT_CONFIG = {
   hosts: '',
   poll_interval: '30',
+  cloud_app: 'nethome',
   cloud_region: 'DE',
   cloud_account: '',
   cloud_password: '',
@@ -99,6 +100,7 @@ export function normalizeConfig(raw = {}) {
       ? interval
       : Number(DEFAULT_CONFIG.poll_interval),
     cloud: {
+      app: CLOUD_APPS.includes(source.cloud_app) ? source.cloud_app : DEFAULT_CONFIG.cloud_app,
       region: REGIONS.includes(source.cloud_region)
         ? source.cloud_region
         : DEFAULT_CONFIG.cloud_region,
