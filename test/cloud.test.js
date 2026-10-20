@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   NetHomePlusCloud,
+  LOGIN_RETRY_MS,
   PUBLIC_ACCOUNTS,
   SMARTHOME_ACCOUNTS,
   SMARTHOME_URL,
@@ -87,16 +88,52 @@ test('errors: refused login, unreachable cloud', async () => {
   });
 });
 
-test('a refused login is not asked again by the same client', async () => {
+test('a login refused by the cloud is not asked again for an hour; other failures are', async () => {
+  let clock = 0;
   const refused = fakeFetch(() => ({ errorCode: '3101', msg: 'password error' }));
   const cloud = new NetHomePlusCloud({
     account: 'me@example.com',
     password: 'pw',
     fetch: refused.fetch,
+    now: () => clock,
   });
   await assert.rejects(cloud.getToken('u1'), { code: 3101 });
   await assert.rejects(cloud.getToken('u2'), { code: 3101 });
   assert.equal(refused.requests.length, 1);
+  clock += LOGIN_RETRY_MS;
+  await assert.rejects(cloud.getToken('u3'), { code: 3101 });
+  assert.equal(refused.requests.length, 2, 'asked again after an hour');
+
+  // A login without session (no code from the cloud) is asked again at once.
+  const odd = fakeFetch((path) =>
+    path === '/v1/user/login/id/get' ? ok({ loginId: 'L' }) : ok({}),
+  );
+  const again = new NetHomePlusCloud({ fetch: odd.fetch });
+  await assert.rejects(again.getToken('u1'), { message: /gave no session/ });
+  await assert.rejects(again.getToken('u2'), { message: /gave no session/ });
+  assert.equal(odd.requests.length, 4);
+});
+
+test('an answer without code shows no NaN; no Internet is told apart from a slow server', async () => {
+  const bare = fakeFetch(() => ({ msg: 'odd' }));
+  await assert.rejects(new NetHomePlusCloud({ fetch: bare.fetch }).getToken('u'), (err) => {
+    assert.equal(err.message, 'Midea cloud refused: odd');
+    assert.equal(err.code, undefined);
+    return true;
+  });
+  const failing = (cause) =>
+    fakeFetch(() => Object.assign(new TypeError('fetch failed'), { cause: { code: cause } }));
+  for (const cause of ['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ENETUNREACH']) {
+    await assert.rejects(new NetHomePlusCloud({ fetch: failing(cause).fetch }).getToken('u'), {
+      network: true,
+      offline: true,
+    });
+  }
+  const slow = fakeFetch(() => Object.assign(new Error('timed out'), { name: 'TimeoutError' }));
+  await assert.rejects(new SmartHomeCloud({ fetch: slow.fetch }).getToken('u'), {
+    network: true,
+    offline: false,
+  });
 });
 
 // --- SmartHome ------------------------------------------------------------------

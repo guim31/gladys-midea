@@ -44,7 +44,7 @@ The **Search for air conditioners** button (Configuration tab) runs a new search
 
 ### About the keys of the V3 units
 
-A V3 unit only talks to a client that knows its token and key. These are stored by Midea in its cloud, filed under the unit itself, not under an account, but only in the cloud of the app the unit was set up with: NetHome Plus or SmartHome (MSmartHome). The integration fetches them **once**, with public accounts of both apps (the practice of the open-source libraries msmart-ng and midea-local), or with your own account if you enter it: the chosen app first, then the other one, so a unit of either app gets its key without changing anything. They are then saved in Gladys' integration volume (`/data`) and never written in the logs. If the unit is reset or paired again in its app, the integration notices the refused key and fetches a new one.
+A V3 unit only talks to a client that knows its token and key. These are stored by Midea in its cloud, filed under the unit itself, not under an account, but only in the cloud of the app the unit was set up with: NetHome Plus or SmartHome (MSmartHome). The integration fetches them **once**, with public accounts of both apps (the practice of the open-source libraries msmart-ng and midea-local), or with your own account if you enter it (tried on both clouds, then the public accounts): the chosen app first, then the other one, so a unit of either app gets its key without changing anything. They are then saved in Gladys' integration volume (`/data`) and never written in the logs. If the unit is reset or paired again in its app, the integration notices the refused key and fetches a new one.
 
 ## Devices and features
 

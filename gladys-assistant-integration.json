@@ -360,10 +360,10 @@
         "es": "Cuenta propia de la nube (opcional)"
       },
       "description": {
-        "en": "Account of the cloud app chosen above, instead of the public accounts.",
-        "fr": "Compte de l'application du cloud choisie ci-dessus, à la place des comptes publics.",
-        "de": "Konto der oben gewählten Cloud-App, statt der öffentlichen Konten.",
-        "es": "Cuenta de la aplicación de la nube elegida arriba, en lugar de las cuentas públicas."
+        "en": "Account of the cloud app chosen above. It is tried on both clouds, then the public accounts.",
+        "fr": "Compte de l'application du cloud choisie ci-dessus. Il est essayé sur les deux clouds, puis les comptes publics.",
+        "de": "Konto der oben gewählten Cloud-App. Es wird an beiden Clouds probiert, danach die öffentlichen Konten.",
+        "es": "Cuenta de la aplicación de la nube elegida arriba. Se prueba en ambas nubes y después las cuentas públicas."
       },
       "placeholder": {
         "en": "e-mail address",

@@ -58,13 +58,41 @@ export class CloudError extends Error {
    * @param {object} [details]
    * @param {number|string} [details.code] the cloud's error code
    * @param {boolean} [details.network] the cloud could not be reached at all
+   * @param {boolean} [details.offline] no Internet at all (no name resolution,
+   *   no route): no use asking another cloud either
    */
-  constructor(message, { code, network = false } = {}) {
+  constructor(message, { code, network = false, offline = false } = {}) {
     super(message);
     this.name = 'CloudError';
     this.code = code;
-    this.network = network;
+    this.network = network || offline;
+    this.offline = offline;
   }
+}
+
+// Connection errors that say Gladys has no Internet, unlike a timeout or an
+// HTTP error of one server.
+const OFFLINE_CODES = new Set([
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ECONNREFUSED',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+]);
+
+// A login refused by the cloud is asked again after this delay at the most
+// (the configuration or a search make a new client sooner).
+export const LOGIN_RETRY_MS = 60 * 60 * 1000;
+
+/** The error of a cloud answer whose code is not 0. */
+function refusal(json, field) {
+  const code = Number(json?.[field]);
+  const known = Number.isFinite(code);
+  // The message of the cloud (e.g. "password error"), never the request.
+  return new CloudError(
+    `Midea cloud refused: ${json?.msg ?? 'unknown error'}${known ? ` (${code})` : ''}`,
+    { code: known ? code : undefined },
+  );
 }
 
 /** yyyyMMddHHmmss, UTC. */
@@ -127,8 +155,10 @@ async function postJson(fetchImpl, url, init, timeoutMs) {
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
-    throw new CloudError(`Midea cloud unreachable (${err.cause?.code ?? err.name})`, {
+    const cause = err.cause?.code ?? err.name;
+    throw new CloudError(`Midea cloud unreachable (${cause})`, {
       network: true,
+      offline: OFFLINE_CODES.has(cause),
     });
   }
   if (!response.ok) {
@@ -154,7 +184,15 @@ function pickToken(result, udpid) {
 class BaseCloud {
   constructor(
     accounts,
-    { region = 'DE', account, password, fetch: fetchImpl, timeoutMs = 10_000 },
+    {
+      region = 'DE',
+      account,
+      password,
+      fetch: fetchImpl,
+      timeoutMs = 10_000,
+      loginTimeoutMs = timeoutMs,
+      now = Date.now,
+    },
   ) {
     if (account && password) {
       this.account = account;
@@ -164,26 +202,32 @@ class BaseCloud {
     }
     this.fetch = fetchImpl ?? globalThis.fetch;
     this.timeoutMs = timeoutMs;
+    this.loginTimeoutMs = loginTimeoutMs;
+    this.now = now;
     this.deviceId = randomBytes(8).toString('hex');
     this.loggedIn = false;
     this.loginError = null;
+    this.loginRefusedAt = 0;
   }
 
   async login() {
     if (this.loggedIn) {
       return;
     }
-    // A refused login (wrong password, account of the other app) is not asked
-    // again for every udpid: a new client is made at the next search.
-    if (this.loginError) {
+    // A login the cloud refused (wrong password, account of the other app)
+    // is not asked again for every udpid, for an hour at the most. Network
+    // errors and odd answers without a code are not remembered.
+    if (this.loginError && this.now() - this.loginRefusedAt < LOGIN_RETRY_MS) {
       throw this.loginError;
     }
+    this.loginError = null;
     try {
       await this.doLogin();
       this.loggedIn = true;
     } catch (err) {
-      if (!err.network) {
+      if (!err.network && typeof err.code === 'number') {
         this.loginError = err;
+        this.loginRefusedAt = this.now();
       }
       throw err;
     }
@@ -234,7 +278,7 @@ export class NetHomePlusCloud extends BaseCloud {
     };
   }
 
-  async request(path, body) {
+  async request(path, body, timeoutMs = this.timeoutMs) {
     const signed = { ...body, sign: sign(path, body) };
     const json = await postJson(
       this.fetch,
@@ -245,14 +289,10 @@ export class NetHomePlusCloud extends BaseCloud {
           Object.entries(signed).map(([k, v]) => [k, String(v)]),
         ).toString(),
       },
-      this.timeoutMs,
+      timeoutMs,
     );
-    const code = Number(json?.errorCode);
-    if (code !== 0) {
-      // The message of the cloud (e.g. "password error"), never the request.
-      throw new CloudError(`Midea cloud refused: ${json?.msg ?? 'unknown error'} (${code})`, {
-        code,
-      });
+    if (Number(json?.errorCode) !== 0) {
+      throw refusal(json, 'errorCode');
     }
     return json.result ?? {};
   }
@@ -265,6 +305,7 @@ export class NetHomePlusCloud extends BaseCloud {
     const session = await this.request(
       '/v1/user/login',
       this.body({ loginAccount: this.account, password: hashPassword(loginId, this.password) }),
+      this.loginTimeoutMs,
     );
     if (!session.sessionId) {
       throw new CloudError('Midea cloud login gave no session');
@@ -284,8 +325,9 @@ export class SmartHomeCloud extends BaseCloud {
    */
   constructor(options = {}) {
     // Its login takes several seconds (5.7 s seen on 20/10/2026), sometimes
-    // more than the 10 s msmart-ng waits before trying again.
-    super(SMARTHOME_ACCOUNTS, { timeoutMs: 30_000, ...options });
+    // more than the 10 s msmart-ng waits before trying again; the other
+    // requests answer in half a second.
+    super(SMARTHOME_ACCOUNTS, { loginTimeoutMs: 30_000, ...options });
     this.app = 'smarthome';
     this.accessToken = '';
   }
@@ -304,7 +346,7 @@ export class SmartHomeCloud extends BaseCloud {
     };
   }
 
-  async request(endpoint, body) {
+  async request(endpoint, body, timeoutMs = this.timeoutMs) {
     const contents = pythonJson(body);
     const random = randomBytes(16).toString('hex');
     const json = await postJson(
@@ -320,13 +362,10 @@ export class SmartHomeCloud extends BaseCloud {
         },
         body: contents,
       },
-      this.timeoutMs,
+      timeoutMs,
     );
-    const code = Number(json?.code);
-    if (code !== 0) {
-      throw new CloudError(`Midea cloud refused: ${json?.msg ?? 'unknown error'} (${code})`, {
-        code,
-      });
+    if (Number(json?.code) !== 0) {
+      throw refusal(json, 'code');
     }
     return json.data ?? {};
   }
@@ -336,20 +375,24 @@ export class SmartHomeCloud extends BaseCloud {
       '/v1/user/login/id/get',
       this.body({ loginAccount: this.account }),
     );
-    const session = await this.request('/mj/user/login', {
-      data: { platform: 2, deviceId: this.deviceId },
-      iotData: {
-        appId: SMARTHOME_APP_ID,
-        src: SMARTHOME_APP_ID,
-        clientType: 1,
-        loginAccount: this.account,
-        iampwd: smartHomeIamPassword(loginId, this.password),
-        password: smartHomePassword(loginId, this.password),
-        pushToken: randomBytes(120).toString('base64url'),
-        stamp: stamp(),
-        reqId: randomBytes(16).toString('hex'),
+    const session = await this.request(
+      '/mj/user/login',
+      {
+        data: { platform: 2, deviceId: this.deviceId },
+        iotData: {
+          appId: SMARTHOME_APP_ID,
+          src: SMARTHOME_APP_ID,
+          clientType: 1,
+          loginAccount: this.account,
+          iampwd: smartHomeIamPassword(loginId, this.password),
+          password: smartHomePassword(loginId, this.password),
+          pushToken: randomBytes(120).toString('base64url'),
+          stamp: stamp(),
+          reqId: randomBytes(16).toString('hex'),
+        },
       },
-    });
+      this.loginTimeoutMs,
+    );
     const accessToken = session?.mdata?.accessToken;
     if (!accessToken) {
       throw new CloudError('Midea cloud login gave no session');

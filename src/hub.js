@@ -668,7 +668,8 @@ export class MideaHub {
         cloud(spec, 'big'),
       ]),
     ];
-    // The last refusal of each cloud app, for the one line saying why.
+    // The last refusal of each cloud and account, for the one line saying why:
+    // a wrong own password stays visible next to the public accounts' answer.
     const refusals = new Map();
     const unreachable = new Set();
     let lastError = null;
@@ -682,10 +683,15 @@ export class MideaHub {
       } catch (err) {
         lastError = err;
         if (attempt.spec) {
-          refusals.set(attempt.spec.app, err.message);
+          const name = CLOUD_APP_NAMES[attempt.spec.app];
+          refusals.set(attempt.spec.account ? `${name} (own account)` : name, err.message);
           logger.debug(
             `${this.label(record)}: ${CLOUD_APP_NAMES[attempt.spec.app]} cloud: ${err.message}`,
           );
+        }
+        if (err.offline && attempt.spec) {
+          // No Internet at all: no use asking the other cloud either.
+          break;
         }
         if (err.network && attempt.spec) {
           // This cloud is unreachable: no use trying the other order, nor
@@ -731,7 +737,7 @@ export class MideaHub {
       `keys:${record.id}`,
       `No key for ${this.label(record)} (V3): ${
         refusals.size
-          ? [...refusals].map(([app, message]) => `${CLOUD_APP_NAMES[app]}: ${message}`).join('; ')
+          ? [...refusals].map(([cloud, message]) => `${cloud}: ${message}`).join('; ')
           : (lastError?.message ?? 'unknown error')
       }`,
     );

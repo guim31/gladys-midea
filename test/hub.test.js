@@ -174,6 +174,53 @@ test('V3: with SmartHome chosen and an own account, NetHome Plus is the fallback
   assert.equal(world.hub.records.get(unit.id).keySource, 'cloud NetHome Plus');
 });
 
+test("V3: a wrong own password stays in the reason, next to the public accounts' answer", async (t) => {
+  const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
+  const refuse = (message, code) => ({
+    calls: [],
+    async getToken(udpid) {
+      this.calls.push(udpid);
+      throw Object.assign(new Error(message), { name: 'CloudError', code });
+    },
+  });
+  const wrongPassword = refuse('Midea cloud refused: password error (3101)', 3101);
+  const noToken = refuse('Midea cloud has no token for this device', 'NO_TOKEN');
+  const world = await createWorld({
+    units: [unit],
+    config: { language: 'en', cloud_account: 'someone@example.com', cloud_password: 'nope' },
+    createCloud: (spec) => (spec.account ? wrongPassword : noToken),
+  });
+  t.after(() => world.app.stop());
+  const { message } = world.hub.problems.active.get(`keys:${unit.id}`);
+  assert.match(message, /NetHome Plus \(own account\): Midea cloud refused: password error/);
+  assert.match(message, /SmartHome: Midea cloud has no token/);
+  assert.ok(!message.includes('someone@example.com'));
+});
+
+test('V3: without Internet the other cloud is not asked', async (t) => {
+  const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
+  const offline = {
+    calls: [],
+    async getToken(udpid) {
+      this.calls.push(udpid);
+      throw Object.assign(new Error('Midea cloud unreachable (ENOTFOUND)'), {
+        name: 'CloudError',
+        network: true,
+        offline: true,
+      });
+    },
+  };
+  const smarthome = createFakeCloud([unit]);
+  const world = await createWorld({
+    units: [unit],
+    createCloud: (spec) => (spec.app === 'nethome' ? offline : smarthome),
+  });
+  t.after(() => world.app.stop());
+  assert.equal(offline.calls.length, 1);
+  assert.equal(smarthome.calls.length, 0);
+  assert.deepEqual(world.fake.discoveredDevices, []);
+});
+
 test('V3: without the cloud the unit is not published, the status and the search say why', async (t) => {
   const unit = new FakeMidea({ host: '192.0.2.11', version: 3 });
   const cloud = createFakeCloud([unit], { reachable: false });
