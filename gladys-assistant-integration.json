@@ -8,8 +8,8 @@
     "de": "Midea-Klimaanlagen, Wärmepumpen, Luftentfeuchter und baugleiche Marken, im lokalen Netzwerk.",
     "es": "Aires acondicionados, bombas de calor, deshumidificadores Midea y marcas afines, en red local."
   },
-  "version": "1.3.0",
-  "docker_image": "ghcr.io/guim31/gladys-midea:1.3.0",
+  "version": "1.3.1",
+  "docker_image": "ghcr.io/guim31/gladys-midea:1.3.1",
   "gladys_version": ">=5.2.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-midea/main/cover.png",
   "categories": ["climate"],
