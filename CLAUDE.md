@@ -233,11 +233,12 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
   manifeste (catégorie, description…) n'atteint le store qu'avec une release.
 - L'indexeur rejette **en silence** : la raison n'apparaît que dans `rejected.json`, à côté de
   `https://integration-store-storage.gladysassistant.com/index.json`.
-- **Image de base** : `FROM public.ecr.aws/docker/library/node:…` (miroir officiel ECR Public, même
-  empreinte) et non `node:…` de Docker Hub, qui refuse en 429 les pulls anonymes des runners GitHub
-  dès qu'il y a plusieurs builds à la fois. Un échec 429 dans le job « Docker build » n'est pas un bug
-  du code. Même parade dans `.github/workflows/build.yml` (posée par l'orchestrateur, ne pas la
-  retirer) : QEMU et BuildKit tirés de `mirror.gcr.io`.
+- **Image de base** : `FROM mirror.gcr.io/library/node:…` (miroir Docker Hub de Google, même
+  empreinte, sans compte) et non `node:…` de Docker Hub ni `public.ecr.aws/docker/library/node:…`
+  d'ECR Public : tous deux refusent en 429 les pulls anonymes des runners GitHub dès qu'il y a
+  plusieurs builds à la fois (ECR depuis fin octobre 2026). Un échec 429 dans le job « Docker build »
+  n'est pas un bug du code. Même parade dans `.github/workflows/build.yml` (posée par
+  l'orchestrateur, ne pas la retirer) : QEMU et BuildKit tirés de `mirror.gcr.io`.
 - La règle `data/` du `.gitignore` du template (pour le volume `/data`) exclut aussi `src/data/` :
   l'ancrer en `/data/`, dans `.prettierignore` aussi.
 
