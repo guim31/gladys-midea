@@ -10,6 +10,10 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Changed
+
+- "Search for air conditioners" is shown in red when no unit answers (no key, unreachable or none found).
+
 ## [1.3.1] - 2026-10-22
 
 ### Security

@@ -13,6 +13,14 @@ import { buildFleetReport, buildTestReport, findRecord } from './diagnostic.js';
 import { DEVICE_REQUIRED, INIT_FAILED, reportMessage, searchMessage } from './texts.js';
 import { WIDGETS } from './widgets.js';
 
+/** A failed action: Gladys shows the message in red, in the user's language. */
+export class ActionFailure extends Error {
+  constructor(text) {
+    super(text.en);
+    this.message = text;
+  }
+}
+
 const logger = createLogger({ name: 'midea-app' });
 
 /**
@@ -83,7 +91,13 @@ export function registerHandlers(gladys, options = {}) {
     whenReady(async () => {
       logger.info('Action: search for air conditioners');
       await hub.search();
-      return searchMessage(hub.summary());
+      const summary = hub.summary();
+      const message = searchMessage(summary);
+      // No unit answering is a failure: Gladys shows it in red.
+      if (!summary.devices.some((device) => device.status === 'answering')) {
+        throw new ActionFailure(message);
+      }
+      return message;
     }),
   );
 

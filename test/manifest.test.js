@@ -65,7 +65,10 @@ test('every manifest action has a registered handler', async () => {
   try {
     for (const action of manifest.actions ?? []) {
       const ack = await world.fake.action(action.key, {});
-      assert.equal(ack.success, true, `manifest action "${action.key}": ${ack.error}`);
+      // A handler may fail on purpose (no unit here): its error is then a
+      // multi-language object, never the core's "no handler" string.
+      const handled = ack.success || typeof ack.error?.en === 'string';
+      assert.ok(handled, `manifest action "${action.key}": ${JSON.stringify(ack.error)}`);
     }
   } finally {
     await world.app.stop();
