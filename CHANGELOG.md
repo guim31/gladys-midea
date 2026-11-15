@@ -13,6 +13,7 @@ the notes of the version's GitHub Release.
 ### Changed
 
 - "Search for air conditioners" is shown in red when no unit answers (no key, unreachable or none found).
+- The diagnostic reports of a V3 unit without a key give each cloud's answer (e.g. a refused password), as the logs do.
 
 ## [1.3.1] - 2026-10-22
 

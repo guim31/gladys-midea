@@ -733,13 +733,13 @@ export class MideaHub {
     }
     record.lan.update({ credentials: null });
     record.keyProblem = lastError?.name === 'CloudError' ? 'cloud' : 'refused';
+    // Kept for the diagnostic report: the users see why, without the logs.
+    record.keyRefusals = refusals.size
+      ? [...refusals].map(([cloud, message]) => `${cloud}: ${message}`).join('; ')
+      : (lastError?.message ?? 'unknown error');
     this.problems.fail(
       `keys:${record.id}`,
-      `No key for ${this.label(record)} (V3): ${
-        refusals.size
-          ? [...refusals].map(([cloud, message]) => `${cloud}: ${message}`).join('; ')
-          : (lastError?.message ?? 'unknown error')
-      }`,
+      `No key for ${this.label(record)} (V3): ${record.keyRefusals}`,
     );
     const error = new Error(`no key for ${this.label(record)}`);
     error.keys = true;
