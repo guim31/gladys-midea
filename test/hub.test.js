@@ -229,8 +229,11 @@ test('V3: without the cloud the unit is not published, the status and the search
   assert.deepEqual(world.fake.discoveredDevices, []);
   assert.equal(world.fake.connectionStatus.connected, false);
   assert.match(world.fake.connectionStatus.message.en, /\(V3\) unit has no key/);
-  const { data } = await world.fake.action('search', {});
-  assert.match(data.message.en, /no key from the Midea cloud/);
+  // No unit answering: an error, shown in red, in every language.
+  const ack = await world.fake.action('search', {});
+  assert.equal(ack.success, false);
+  assert.match(ack.error.en, /no key from the Midea cloud/);
+  assert.match(ack.error.fr, /pas de clé du cloud Midea/);
   // Each cloud app once at start (one byte order is enough to see it is down),
   // and again by the search.
   assert.equal(cloud.calls.length, 4);

@@ -233,6 +233,9 @@ export function recordLines(hub, record, redactor, now) {
     `  answering: ${record.reachable === null ? 'not yet' : yesNo(record.reachable)}, last read ${formatAge(record.lastReadAt, now)}, failures in a row: ${record.failures}`,
     `  last error: ${record.lastError ?? '-'}`,
   ];
+  if (record.version === 3 && !record.credentials && record.keyProblem && record.keyRefusals) {
+    lines.push(`  cloud answers: ${record.keyRefusals}`);
+  }
   if (heatPump) {
     lines.push(
       `  message protocol: ${record.protocol ?? 'not asked yet'}, energy counters received: ${yesNo(record.hasEnergy)}`,
