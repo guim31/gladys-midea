@@ -10,6 +10,14 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Fixed
+
+- SmartHome (MSmartHome) accounts of another region are asked on their own server, as the app does: such an account was refused with "Account or password incorrect" (3102). Thanks to midea-local for finding the routing.
+
+### Changed
+
+- The diagnostic reports give the cloud server asked (host name only) next to each cloud's answer.
+
 ## [1.3.2] - 2026-11-16
 
 ### Changed
