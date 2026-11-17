@@ -367,3 +367,41 @@ test('SmartHome: a login asked again starts from the default server', async () =
   assert.equal(cloud.host, 'mp-prod.appsmb.com');
   assert.ok(requests.at(-1).url.startsWith(SMARTHOME_URL));
 });
+
+test('SmartHome: units asking at once share one routed login', async () => {
+  const us = 'https://mp-us-prod.appsmb.com/mas/v5/app/proxy?alias=';
+  const { fetch, requests } = routedLogin((alias) =>
+    alias === ROUTERS[0] ? done({ masUrl: us }) : { code: 10004 },
+  );
+  const cloud = new SmartHomeCloud({ account: 'user@example.com', password: 'pw', fetch });
+  assert.deepEqual(await Promise.all([cloud.getToken('u1', 1), cloud.getToken('u2', 2)]), [
+    { token: 'cc', key: 'dd' },
+    { token: 'cc', key: 'dd' },
+  ]);
+  assert.equal(requests.filter((request) => request.alias === '/mj/user/login').length, 1);
+  assert.ok(requests.slice(1).every((request) => request.url.startsWith(us)));
+});
+
+test('SmartHome: an HTTP error of the account router still asks the legacy one', async () => {
+  const eu = 'https://ru-eu.appsmb.com/mas/v5/app/proxy?alias=';
+  const requests = [];
+  const fetch = async (url, init) => {
+    const alias = new URL(url).searchParams.get('alias');
+    requests.push({ url, alias });
+    if (alias === ROUTERS[0]) return { ok: false, status: 404, json: async () => ({}) };
+    const body = JSON.parse(init.body);
+    const reply =
+      alias === ROUTERS[1]
+        ? done({ masUrl: eu })
+        : alias === '/v1/user/login/id/get'
+          ? done({ loginId: 'L1' })
+          : alias === '/mj/user/login'
+            ? done({ mdata: { accessToken: 'T1' } })
+            : done({ tokenlist: [{ udpId: body.udpid, token: 'cc', key: 'dd' }] });
+    return { ok: true, status: 200, json: async () => reply };
+  };
+  const cloud = new SmartHomeCloud({ fetch });
+  await cloud.getToken('u1', 1);
+  assert.equal(requests[1].alias, ROUTERS[1]);
+  assert.equal(cloud.host, 'ru-eu.appsmb.com');
+});

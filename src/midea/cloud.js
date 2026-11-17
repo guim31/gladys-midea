@@ -196,12 +196,19 @@ async function postJson(fetchImpl, url, init, timeoutMs) {
     });
   }
   if (!response.ok) {
-    throw new CloudError(`Midea cloud answered HTTP ${response.status}`, { network: true });
+    // `reached`: the server answered, the network is fine.
+    throw Object.assign(
+      new CloudError(`Midea cloud answered HTTP ${response.status}`, { network: true }),
+      { reached: true },
+    );
   }
   try {
     return await response.json();
   } catch {
-    throw new CloudError('Midea cloud answered something else than JSON', { network: true });
+    throw Object.assign(
+      new CloudError('Midea cloud answered something else than JSON', { network: true }),
+      { reached: true },
+    );
   }
 }
 
@@ -254,6 +261,15 @@ class BaseCloud {
     if (this.loginError && this.now() - this.loginRefusedAt < LOGIN_RETRY_MS) {
       throw this.loginError;
     }
+    // Several units may ask at once: one login, shared (a SmartHome login
+    // routes the client to another server half-way).
+    this.pendingLogin ??= this.loginOnce().finally(() => {
+      this.pendingLogin = null;
+    });
+    return this.pendingLogin;
+  }
+
+  async loginOnce() {
     this.loginError = null;
     try {
       await this.doLogin();
@@ -423,6 +439,7 @@ export class SmartHomeCloud extends BaseCloud {
    * many accounts), else the default server, as before.
    */
   async route() {
+    // The routers live on the default server; a login asked again starts there.
     this.proxy = `${SMARTHOME_URL}${SMARTHOME_PROXY}?alias=`;
     const routers = [
       [
@@ -441,8 +458,8 @@ export class SmartHomeCloud extends BaseCloud {
       try {
         answer = await this.request(endpoint, this.body({ platformId: '1', ...data }));
       } catch (err) {
-        if (err.network) {
-          // Same server for both routers and the login: the login tells.
+        if (err.network && !err.reached) {
+          // Out of reach: same server for both routers and the login, which tells.
           return;
         }
         continue;
