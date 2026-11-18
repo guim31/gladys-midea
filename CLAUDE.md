@@ -311,5 +311,11 @@ transport }` ; l'ack d'une action donne `data.message`, celui d'un widget `data.
   dans chaque set. Gladys n'a pas de catégorie déshumidificateur : mode, ventilation et humidité cible en
   `text/select` (valeurs texte figées : `manual`, `continuous`…), comme l'intégration Tuya. Le hub
   aiguille par `KINDS` (ids, noms, appareil, fonctionnalités, valeurs) selon `record.type`.
+- **Routage SmartHome** (midea-local PR 896, 1.4) : un compte SmartHome vit sur le serveur de sa région ;
+  `mp-prod.appsmb.com` répond 3102 « Account or password incorrect » pour un compte d'ailleurs. Avant
+  le login, `/v1/unitcenter/router/user/name` (`clientType`/`clientSrc` 8, nom chiffré en AES-CBC) donne
+  `masUrl`, puis le routeur historique (souvent 10004), sinon le serveur par défaut. Vérifié en direct le
+  17/11/2026 : adresse inconnue → 10004 sur les deux routeurs ; compte public US de msmart-ng →
+  `mp-us-prod.appsmb.com`. Les rapports affichent l'hôte interrogé.
 - **Session de code** : le proxy refuse `mapp.appsmb.com`, et le `fetch` de Node n'utilise pas
   `HTTPS_PROXY` : le cloud se vérifie avec `scripts/probe.mjs` depuis une machine qui a le réseau.

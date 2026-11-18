@@ -14,7 +14,7 @@
 // nothing here is logged.
 // -----------------------------------------------------------------------------
 
-import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { createCipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
 export const CLOUD_APPS = ['nethome', 'smarthome'];
 export const CLOUD_APP_NAMES = { nethome: 'NetHome Plus', smarthome: 'SmartHome' };
@@ -37,6 +37,7 @@ export const REGIONS = Object.keys(PUBLIC_ACCOUNTS);
 // Only the international server: the Chinese one (other keys) is left out.
 
 export const SMARTHOME_URL = 'https://mp-prod.appsmb.com';
+const SMARTHOME_PROXY = '/mas/v5/app/proxy';
 const SMARTHOME_APP_ID = '1010';
 const SMARTHOME_HMAC_KEY = 'PROD_VnoClJI9aikS8dyy';
 const SMARTHOME_IOT_KEY = 'meicloud';
@@ -131,6 +132,39 @@ export function smartHomePassword(loginId, password) {
   return sha256Hex(`${loginId}${sha256Hex(password)}${SMARTHOME_LOGIN_KEY}`);
 }
 
+/**
+ * The account name as the SmartHome account router wants it (midea-local
+ * `encrypt_account`, PR 896): AES-128-CBC, PKCS#7, key and IV the two halves
+ * of the first 32 characters of the hexadecimal SHA-256 of the app key.
+ */
+export function smartHomeEncryptAccount(account, appKey = SMARTHOME_LOGIN_KEY) {
+  const digest = sha256Hex(appKey);
+  const cipher = createCipheriv(
+    'aes-128-cbc',
+    Buffer.from(digest.slice(0, 16), 'ascii'),
+    Buffer.from(digest.slice(16, 32), 'ascii'),
+  );
+  return Buffer.concat([cipher.update(account, 'utf8'), cipher.final()]).toString('hex');
+}
+
+/**
+ * The proxy base (`https://host/mas/v5/app/proxy?alias=`) of a `masUrl` given
+ * by a SmartHome router, or null when it is not an https URL.
+ */
+export function smartHomeProxy(masUrl) {
+  let url;
+  try {
+    url = new URL(String(masUrl));
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' || !url.hostname) {
+    return null;
+  }
+  const path = url.pathname === '/' ? SMARTHOME_PROXY : url.pathname;
+  return `${url.origin}${path}?alias=`;
+}
+
 /** The SmartHome `iampwd`: SHA-256(loginId + MD5(MD5(password)) + login key). */
 export function smartHomeIamPassword(loginId, password) {
   return sha256Hex(`${loginId}${md5Hex(md5Hex(password))}${SMARTHOME_LOGIN_KEY}`);
@@ -162,12 +196,19 @@ async function postJson(fetchImpl, url, init, timeoutMs) {
     });
   }
   if (!response.ok) {
-    throw new CloudError(`Midea cloud answered HTTP ${response.status}`, { network: true });
+    // `reached`: the server answered, the network is fine.
+    throw Object.assign(
+      new CloudError(`Midea cloud answered HTTP ${response.status}`, { network: true }),
+      { reached: true },
+    );
   }
   try {
     return await response.json();
   } catch {
-    throw new CloudError('Midea cloud answered something else than JSON', { network: true });
+    throw Object.assign(
+      new CloudError('Midea cloud answered something else than JSON', { network: true }),
+      { reached: true },
+    );
   }
 }
 
@@ -220,6 +261,15 @@ class BaseCloud {
     if (this.loginError && this.now() - this.loginRefusedAt < LOGIN_RETRY_MS) {
       throw this.loginError;
     }
+    // Several units may ask at once: one login, shared (a SmartHome login
+    // routes the client to another server half-way).
+    this.pendingLogin ??= this.loginOnce().finally(() => {
+      this.pendingLogin = null;
+    });
+    return this.pendingLogin;
+  }
+
+  async loginOnce() {
     this.loginError = null;
     try {
       await this.doLogin();
@@ -262,6 +312,11 @@ export class NetHomePlusCloud extends BaseCloud {
     super(PUBLIC_ACCOUNTS, options);
     this.app = 'nethome';
     this.sessionId = '';
+  }
+
+  /** The host of the server asked (shown in the diagnostic). */
+  get host() {
+    return new URL(CLOUD_URL).hostname;
   }
 
   body(data) {
@@ -330,6 +385,12 @@ export class SmartHomeCloud extends BaseCloud {
     super(SMARTHOME_ACCOUNTS, { loginTimeoutMs: 30_000, ...options });
     this.app = 'smarthome';
     this.accessToken = '';
+    this.proxy = `${SMARTHOME_URL}${SMARTHOME_PROXY}?alias=`;
+  }
+
+  /** The host of the server asked (shown in the diagnostic, never the URL). */
+  get host() {
+    return new URL(this.proxy).hostname;
   }
 
   body(data) {
@@ -351,7 +412,7 @@ export class SmartHomeCloud extends BaseCloud {
     const random = randomBytes(16).toString('hex');
     const json = await postJson(
       this.fetch,
-      `${SMARTHOME_URL}/mas/v5/app/proxy?alias=${endpoint}`,
+      `${this.proxy}${endpoint}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -370,7 +431,49 @@ export class SmartHomeCloud extends BaseCloud {
     return json.data ?? {};
   }
 
+  /**
+   * The server of the account (midea-local PR 896, issue 895): an account of
+   * another region is unknown to mp-prod.appsmb.com, which answers 3102
+   * "Account or password incorrect". The account router first (web client
+   * fields, encrypted name), then the legacy one (which answers 10004 for
+   * many accounts), else the default server, as before.
+   */
+  async route() {
+    // The routers live on the default server; a login asked again starts there.
+    this.proxy = `${SMARTHOME_URL}${SMARTHOME_PROXY}?alias=`;
+    const routers = [
+      [
+        '/v1/unitcenter/router/user/name',
+        {
+          clientType: 8,
+          clientSrc: 8,
+          userType: '0',
+          userName: smartHomeEncryptAccount(this.account),
+        },
+      ],
+      ['/v1/multicloud/platform/user/route', { userType: '0', userName: this.account }],
+    ];
+    for (const [endpoint, data] of routers) {
+      let answer;
+      try {
+        answer = await this.request(endpoint, this.body({ platformId: '1', ...data }));
+      } catch (err) {
+        if (err.network && !err.reached) {
+          // Out of reach: same server for both routers and the login, which tells.
+          return;
+        }
+        continue;
+      }
+      const proxy = smartHomeProxy(answer?.masUrl);
+      if (proxy) {
+        this.proxy = proxy;
+        return;
+      }
+    }
+  }
+
   async doLogin() {
+    await this.route();
     const { loginId } = await this.request(
       '/v1/user/login/id/get',
       this.body({ loginAccount: this.account }),

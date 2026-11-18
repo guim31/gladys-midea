@@ -20,6 +20,8 @@ import {
   sign,
   smartHomeIamPassword,
   smartHomePassword,
+  smartHomeEncryptAccount,
+  smartHomeProxy,
   smartHomeSign,
 } from '../src/midea/cloud.js';
 
@@ -158,6 +160,7 @@ function fakeSmartHome(handler) {
 }
 
 const done = (data) => ({ code: '0', msg: 'ok', data });
+const ROUTERS = ['/v1/unitcenter/router/user/name', '/v1/multicloud/platform/user/route'];
 
 test('SmartHome: login then getToken through the proxy, signed, hashed passwords, access token', async () => {
   const { fetch, requests } = fakeSmartHome((alias, body) => {
@@ -169,7 +172,7 @@ test('SmartHome: login then getToken through the proxy, signed, hashed passwords
   assert.deepEqual(await cloud.getToken('u1', 42), { token: 'cc', key: 'dd' });
   assert.deepEqual(
     requests.map((request) => request.alias),
-    ['/v1/user/login/id/get', '/mj/user/login', '/v1/iot/secure/getToken'],
+    [...ROUTERS, '/v1/user/login/id/get', '/mj/user/login', '/v1/iot/secure/getToken'],
   );
   for (const { url, headers, raw } of requests) {
     assert.ok(url.startsWith(`${SMARTHOME_URL}/mas/v5/app/proxy?alias=`));
@@ -178,6 +181,7 @@ test('SmartHome: login then getToken through the proxy, signed, hashed passwords
     assert.match(headers.random, /^[0-9a-f]{32}$/);
     assert.equal(headers.sign, smartHomeSign(raw, headers.random));
   }
+  requests.splice(0, ROUTERS.length);
   assert.equal(requests[0].body.appId, '1010');
   assert.equal(requests[0].body.loginAccount, 'me@example.com');
   const { iotData, data } = requests[1].body;
@@ -204,7 +208,7 @@ test('SmartHome: public account of the region, errors of the cloud and of the ne
   await assert.rejects(new SmartHomeCloud({ region: 'US', fetch: empty.fetch }).getToken('u1', 1), {
     code: 'NO_TOKEN',
   });
-  assert.equal(empty.requests[0].body.loginAccount, SMARTHOME_ACCOUNTS.US[0]);
+  assert.equal(empty.requests[ROUTERS.length].body.loginAccount, SMARTHOME_ACCOUNTS.US[0]);
 
   const refused = fakeSmartHome(() => ({ code: 3201, msg: 'You have no permissions.' }));
   await assert.rejects(new SmartHomeCloud({ fetch: refused.fetch }).getToken('u'), {
@@ -231,4 +235,173 @@ test('cloud chain: the chosen app first, then the other; an own account before t
   ]);
   assert.ok(createCloudClient({ app: 'smarthome', region: 'DE' }) instanceof SmartHomeCloud);
   assert.ok(createCloudClient({ app: 'nethome', region: 'DE' }) instanceof NetHomePlusCloud);
+});
+
+// --- SmartHome routing (midea-local PR 896) -------------------------------------
+
+test('SmartHome: the account name is encrypted as midea-local does', () => {
+  // Vectors of midea-local's own tests (tests/cloud_test.py, security_test.py).
+  assert.equal(
+    smartHomeEncryptAccount('user@example.com'),
+    '3b976d7c85354a6faea1e1de797b36810786035477166ae21b1e4ad55e4dc7a5',
+  );
+  assert.equal(
+    smartHomeEncryptAccount('user@example.com', 'login_key'),
+    '73fe41a2150d4b8fa13c30fa5ae6e5906a2174fa83dd6fdcbabe26719ad99022',
+  );
+});
+
+test('SmartHome: proxy base of a router answer', () => {
+  const us = 'https://mp-us-prod.appsmb.com/mas/v5/app/proxy?alias=';
+  assert.equal(smartHomeProxy(us), us);
+  assert.equal(
+    smartHomeProxy('https://ru-eu.appsmb.com'),
+    'https://ru-eu.appsmb.com/mas/v5/app/proxy?alias=',
+  );
+  for (const bad of [
+    undefined,
+    '',
+    'not a url',
+    'http://mp-us-prod.appsmb.com/mas/v5/app/proxy?alias=',
+  ]) {
+    assert.equal(smartHomeProxy(bad), null);
+  }
+});
+
+const routedLogin = (route) =>
+  fakeSmartHome((alias, body) => {
+    if (ROUTERS.includes(alias)) return route(alias, body);
+    if (alias === '/v1/user/login/id/get') return done({ loginId: 'L1' });
+    if (alias === '/mj/user/login') return done({ mdata: { accessToken: 'T1' } });
+    return done({ tokenlist: [{ udpId: body.udpid, token: 'cc', key: 'dd' }] });
+  });
+
+test('SmartHome: the account router sends login and getToken to the server of the account', async () => {
+  const us = 'https://mp-us-prod.appsmb.com/mas/v5/app/proxy?alias=';
+  const { fetch, requests } = routedLogin((alias) =>
+    alias === ROUTERS[0] ? done({ masUrl: us }) : assert.fail('legacy router not needed'),
+  );
+  const cloud = new SmartHomeCloud({ account: 'user@example.com', password: 'pw', fetch });
+  assert.deepEqual(await cloud.getToken('u1', 42), { token: 'cc', key: 'dd' });
+  assert.equal(cloud.host, 'mp-us-prod.appsmb.com');
+  const [route, ...rest] = requests;
+  assert.ok(route.url.startsWith(`${SMARTHOME_URL}/mas/v5/app/proxy?alias=`));
+  assert.equal(route.body.clientType, 8);
+  assert.equal(route.body.clientSrc, 8);
+  assert.equal(route.body.userType, '0');
+  assert.equal(route.body.platformId, '1');
+  assert.equal(
+    route.body.userName,
+    '3b976d7c85354a6faea1e1de797b36810786035477166ae21b1e4ad55e4dc7a5',
+  );
+  assert.ok(!route.raw.includes('user@example.com'), 'the account name travels encrypted');
+  assert.ok(!('password' in route.body));
+  assert.deepEqual(
+    rest.map((request) => request.url),
+    [`${us}/v1/user/login/id/get`, `${us}/mj/user/login`, `${us}/v1/iot/secure/getToken`],
+  );
+  assert.equal(rest[0].body.clientType, 1);
+});
+
+test('SmartHome: the legacy router when the account router does not know the account', async () => {
+  const eu = 'https://ru-eu.appsmb.com/mas/v5/app/proxy?alias=';
+  for (const first of [
+    { code: 10004, msg: 'The user router is not exist' },
+    done({}),
+    done({ masUrl: '' }),
+  ]) {
+    const { fetch, requests } = routedLogin((alias) =>
+      alias === ROUTERS[0] ? first : done({ masUrl: eu }),
+    );
+    const cloud = new SmartHomeCloud({ account: 'user@example.com', password: 'pw', fetch });
+    await cloud.getToken('u1', 42);
+    assert.equal(requests[1].alias, ROUTERS[1]);
+    assert.equal(requests[1].body.userName, 'user@example.com');
+    assert.equal(requests[1].body.clientType, 1);
+    assert.ok(!('clientSrc' in requests[1].body));
+    assert.equal(cloud.host, 'ru-eu.appsmb.com');
+    assert.ok(requests.slice(2).every((request) => request.url.startsWith(eu)));
+  }
+});
+
+test('SmartHome: no router answers, the default server as before', async () => {
+  const { fetch, requests } = routedLogin(() => ({ code: 10004, msg: 'no router' }));
+  const cloud = new SmartHomeCloud({ fetch });
+  await cloud.getToken('u1', 42);
+  assert.equal(cloud.host, 'mp-prod.appsmb.com');
+  assert.deepEqual(
+    requests.map((request) => request.alias),
+    [...ROUTERS, '/v1/user/login/id/get', '/mj/user/login', '/v1/iot/secure/getToken'],
+  );
+  assert.ok(requests.every((request) => request.url.startsWith(SMARTHOME_URL)));
+
+  // A router out of reach: the legacy one is not asked (same server).
+  const slow = routedLogin(() => Object.assign(new Error('timed out'), { name: 'TimeoutError' }));
+  await new SmartHomeCloud({ fetch: slow.fetch }).getToken('u1', 42);
+  assert.deepEqual(
+    slow.requests.map((request) => request.alias),
+    [ROUTERS[0], '/v1/user/login/id/get', '/mj/user/login', '/v1/iot/secure/getToken'],
+  );
+});
+
+test('SmartHome: a login asked again starts from the default server', async () => {
+  let clock = 0;
+  const us = 'https://mp-us-prod.appsmb.com/mas/v5/app/proxy?alias=';
+  let routed = true;
+  const { fetch, requests } = fakeSmartHome((alias) => {
+    if (alias === ROUTERS[0]) return routed ? done({ masUrl: us }) : { code: 10004 };
+    if (alias === ROUTERS[1]) return { code: 10004 };
+    return { code: 3102, msg: 'Account or password incorrect' };
+  });
+  const cloud = new SmartHomeCloud({
+    account: 'a@example.com',
+    password: 'p',
+    fetch,
+    now: () => clock,
+  });
+  await assert.rejects(cloud.getToken('u1'), { code: 3102 });
+  assert.equal(cloud.host, 'mp-us-prod.appsmb.com');
+  routed = false;
+  clock += LOGIN_RETRY_MS;
+  await assert.rejects(cloud.getToken('u1'), { code: 3102 });
+  assert.equal(cloud.host, 'mp-prod.appsmb.com');
+  assert.ok(requests.at(-1).url.startsWith(SMARTHOME_URL));
+});
+
+test('SmartHome: units asking at once share one routed login', async () => {
+  const us = 'https://mp-us-prod.appsmb.com/mas/v5/app/proxy?alias=';
+  const { fetch, requests } = routedLogin((alias) =>
+    alias === ROUTERS[0] ? done({ masUrl: us }) : { code: 10004 },
+  );
+  const cloud = new SmartHomeCloud({ account: 'user@example.com', password: 'pw', fetch });
+  assert.deepEqual(await Promise.all([cloud.getToken('u1', 1), cloud.getToken('u2', 2)]), [
+    { token: 'cc', key: 'dd' },
+    { token: 'cc', key: 'dd' },
+  ]);
+  assert.equal(requests.filter((request) => request.alias === '/mj/user/login').length, 1);
+  assert.ok(requests.slice(1).every((request) => request.url.startsWith(us)));
+});
+
+test('SmartHome: an HTTP error of the account router still asks the legacy one', async () => {
+  const eu = 'https://ru-eu.appsmb.com/mas/v5/app/proxy?alias=';
+  const requests = [];
+  const fetch = async (url, init) => {
+    const alias = new URL(url).searchParams.get('alias');
+    requests.push({ url, alias });
+    if (alias === ROUTERS[0]) return { ok: false, status: 404, json: async () => ({}) };
+    const body = JSON.parse(init.body);
+    const reply =
+      alias === ROUTERS[1]
+        ? done({ masUrl: eu })
+        : alias === '/v1/user/login/id/get'
+          ? done({ loginId: 'L1' })
+          : alias === '/mj/user/login'
+            ? done({ mdata: { accessToken: 'T1' } })
+            : done({ tokenlist: [{ udpId: body.udpid, token: 'cc', key: 'dd' }] });
+    return { ok: true, status: 200, json: async () => reply };
+  };
+  const cloud = new SmartHomeCloud({ fetch });
+  await cloud.getToken('u1', 1);
+  assert.equal(requests[1].alias, ROUTERS[1]);
+  assert.equal(cloud.host, 'ru-eu.appsmb.com');
 });

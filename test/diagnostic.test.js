@@ -170,13 +170,21 @@ test('unit test: a V3 unit without keys is not read, and a unit is required', as
   const pump = new FakeHeatPump({ host: '192.0.2.40', version: 3 });
   const created = await createWorld({
     units: [pump],
-    cloud: { calls: [], getToken: async () => Promise.reject(new Error('no token')) },
+    cloud: {
+      calls: [],
+      host: 'mp-us-prod.appsmb.com',
+      getToken: async () => Promise.reject(new Error('no token')),
+    },
   });
   t.after(() => created.app.stop());
   const text = report(await created.fake.action('test_device', { device_ref: '192.0.2.40' }));
   assert.match(text, /keys: missing/);
   // Why, as the cloud said it: the users have no access to the logs.
-  assert.match(text, /cloud answers: NetHome Plus: no token; SmartHome: no token/);
+  // The server asked, host only (a SmartHome account is routed by region).
+  assert.match(
+    text,
+    /cloud answers: NetHome Plus \(mp-us-prod\.appsmb\.com\): no token; SmartHome \(mp-us-prod\.appsmb\.com\): no token/,
+  );
   assert.match(text, /skipped: this V3 unit has no token and key yet/);
 
   const ack = await created.fake.action('test_device', {});

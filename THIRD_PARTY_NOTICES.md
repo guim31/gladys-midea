@@ -9,6 +9,10 @@ in `src/midea/c3.js` are ported from midea-local, and
 `test/fixtures/midea-local-c3-vectors.json` was produced by running it. The
 dehumidifier (0xA1) commands in `src/midea/a1.js` are ported from midea-local
 too, and `test/fixtures/midea-local-a1-vectors.json` was produced by running it.
+The routing of SmartHome accounts to the server of their region in
+`src/midea/cloud.js` (account router, encrypted account name, legacy router) is
+ported from midea-local (pull request 896), and its test vectors come from
+midea-local's test suite.
 
 ## msmart-ng (https://github.com/mill1000/midea-msmart)
 

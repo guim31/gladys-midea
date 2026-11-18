@@ -683,8 +683,15 @@ export class MideaHub {
       } catch (err) {
         lastError = err;
         if (attempt.spec) {
-          const name = CLOUD_APP_NAMES[attempt.spec.app];
-          refusals.set(attempt.spec.account ? `${name} (own account)` : name, err.message);
+          // The server asked, host only: a SmartHome account is routed to
+          // the server of its region.
+          const host = this.cloudClient(attempt.spec).host;
+          const where = [attempt.spec.account ? 'own account' : '', host ?? ''].filter(Boolean);
+          const label = `${CLOUD_APP_NAMES[attempt.spec.app]}${where.length ? ` (${where.join(', ')})` : ''}`;
+          refusals.set(`${attempt.spec.app}:${attempt.spec.account ? 'own' : 'public'}`, {
+            label,
+            message: err.message,
+          });
           logger.debug(
             `${this.label(record)}: ${CLOUD_APP_NAMES[attempt.spec.app]} cloud: ${err.message}`,
           );
@@ -735,7 +742,7 @@ export class MideaHub {
     record.keyProblem = lastError?.name === 'CloudError' ? 'cloud' : 'refused';
     // Kept for the diagnostic report: the users see why, without the logs.
     record.keyRefusals = refusals.size
-      ? [...refusals].map(([cloud, message]) => `${cloud}: ${message}`).join('; ')
+      ? [...refusals.values()].map(({ label, message }) => `${label}: ${message}`).join('; ')
       : (lastError?.message ?? 'unknown error');
     this.problems.fail(
       `keys:${record.id}`,
