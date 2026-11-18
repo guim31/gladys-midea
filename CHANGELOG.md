@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-18
+
 ### Fixed
 
 - SmartHome (MSmartHome) accounts of another region are asked on their own server, as the app does: such an account was refused with "Account or password incorrect" (3102). Thanks to midea-local for finding the routing.
@@ -126,7 +128,8 @@ the notes of the version's GitHub Release.
   "Mode and fan" buttons.
 - Names, messages and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-midea/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/guim31/gladys-midea/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/guim31/gladys-midea/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/guim31/gladys-midea/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/guim31/gladys-midea/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/guim31/gladys-midea/compare/v1.2.0...v1.3.0
